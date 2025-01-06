@@ -1,0 +1,17 @@
+Sandbox_EN = {
+    -- Page Name
+    Sandbox_BarricadesHurtZombies = "Barricades Hurt Zombies",
+    
+    -- Barricade Damage Option
+    Sandbox_BarricadesHurtZombies_BarricadeDamage = "Damage Per Hit",
+    Sandbox_BarricadesHurtZombies_BarricadeDamage_tooltip = "How much damage zombies take when hitting barricades (as a percentage of their health)",
+    
+    -- Hurting Barricade Type Option
+    Sandbox_BarricadesHurtZombies_HurtingBarricade = "Damaging Barricade Types",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_tooltip = "Which types of barricades will damage zombies when hit",
+    
+    -- Enum values for HurtingBarricade
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option1 = "Player-Built Only",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option2 = "All Objects",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option3 = "Disabled",
+}
