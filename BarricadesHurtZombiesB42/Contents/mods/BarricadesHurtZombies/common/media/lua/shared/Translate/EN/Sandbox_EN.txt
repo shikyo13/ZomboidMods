@@ -1,4 +1,4 @@
-Sandbox_EN = {
+﻿Sandbox_EN = {
     -- Page Name
     Sandbox_BarricadesHurtZombies = "Barricades Hurt Zombies",
     
