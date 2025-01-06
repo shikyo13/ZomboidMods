@@ -1,4 +1,5 @@
 version=1
+id=3402208866
 title=Barricades Hurt Zombies [B42]
 description=A Build 42 fork of Brightex's "Barricades Hurt Zombies" mod.
 description=
@@ -24,5 +25,5 @@ description=The source code for this mod is available at https://github.com/shik
 description=
 description=Contact:
 description=If you are Brightex and would like this mod removed or have any concerns, please contact me through Steam or the mod comments section.
-tags=Build 42;Gameplay;Balance
+tags=Build 42;Balance
 visibility=public
