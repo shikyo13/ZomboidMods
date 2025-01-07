@@ -1,0 +1,24 @@
+﻿Sandbox_DE = {
+    Sandbox_BarricadesHurtZombies = "Barrikaden Verletzen Zombies",
+    
+    Sandbox_BarricadesHurtZombies_BaseDamage = "Basis-Schaden",
+    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "Grundschaden, den Zombies beim Treffen von Holzbarrikaden erleiden (als Prozentsatz ihrer Gesundheit). Wird mit Materialtyp-Boni multipliziert.",
+    
+    Sandbox_BarricadesHurtZombies_DamageMode = "Schadensquelle",
+    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "Welche Arten von Objekten Zombies bei Treffern Schaden zufügen",
+    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "Nur Spieler-Konstruktionen",
+    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "Alle Objekte",
+    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "Deaktiviert",
+    
+    Sandbox_BarricadesHurtZombies_MetalMultiplier = "Metall-Schadensmultiplikator",
+    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "Zusätzlicher Schaden durch Metallbarrieren im Vergleich zu Holz. 1.25 bedeutet 25% mehr Schaden als Holz.",
+    
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "Leichte Stachel-Multiplikator (Benötigt SVU)",
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "Mit SVU installiert: Zusätzlicher Schaden durch leichte Stachel. 1.5 bedeutet 50% mehr Schaden als Holz. Ohne SVU keine Wirkung.",
+    
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "Schwere Stachel-Multiplikator (Benötigt SVU)",
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "Mit SVU installiert: Zusätzlicher Schaden durch schwere Stachel. 1.75 bedeutet 75% mehr Schaden als Holz. Ohne SVU keine Wirkung.",
+    
+    Sandbox_BarricadesHurtZombies_BloodEffects = "Bluteffekte",
+    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "Wenn aktiviert, erzeugen Zombies beim Erleiden von Schaden Blutspritzer. Stärkere Materialien erzeugen mehr Blut.",
+}

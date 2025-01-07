@@ -1,0 +1,30 @@
+﻿Sandbox_JP = {
+    -- ページ名
+    Sandbox_BarricadesHurtZombies = "バリケードがゾンビを傷つける",
+
+    -- 基本ダメージオプション（常に有効）
+    Sandbox_BarricadesHurtZombies_BaseDamage = "基本ダメージ",
+    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "木製バリケードにヒットしたときのゾンビへの基本ダメージ（彼らの体力のパーセンテージとして）。これは素材タイプのボーナスで乗算されます。",
+
+    -- ダメージモードオプション（常に有効）
+    Sandbox_BarricadesHurtZombies_DamageMode = "ダメージソース",
+    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "どの種類のオブジェクトがゾンビを攻撃したときにダメージを与えるか",
+    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "プレイヤーが作成したもののみ",
+    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "すべてのオブジェクト",
+    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "無効",
+
+    -- 素材乗数（基本金属は常に有効）
+    Sandbox_BarricadesHurtZombies_MetalMultiplier = "金属ダメージ乗数",
+    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "木製のものに比べて金属バリアがどれだけ追加ダメージを与えるか。1.25 は木よりも 25% 多いダメージを意味します。",
+
+    -- SVU 固有のオプション
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "ライトスパイク乗数（SVU 必須）",
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "SVU3 がインストールされている場合：ライトスパイクや基本的なスパイク付きアーマーが与える追加ダメージ。1.5 は木よりも 50% 多いダメージを意味します。SVU3 がないと効果がありません。",
+
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "ヘビースパイク乗数（SVU 必須）",
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "SVU3 がインストールされている場合：ヘビースパイクや強化されたスパイク付きアーマーが与える追加ダメージ。1.75 は木よりも 75% 多いダメージを意味します。SVU3 がないと効果がありません。",
+
+    -- 血液エフェクトの切り替え（常に有効）
+    Sandbox_BarricadesHurtZombies_BloodEffects = "血液エフェクト",
+    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "有効にすると、ゾンビがダメージを受けたときに血しぶきを発生させます。強い素材ほど多くの血が出ます。",
+}
