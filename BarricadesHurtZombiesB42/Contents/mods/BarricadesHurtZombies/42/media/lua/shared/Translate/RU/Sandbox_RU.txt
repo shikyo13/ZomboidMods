@@ -1,0 +1,24 @@
+﻿Sandbox_RU = {
+    Sandbox_BarricadesHurtZombies = "Баррикады Ранят Зомби",
+    
+    Sandbox_BarricadesHurtZombies_BaseDamage = "Базовый Урон",
+    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "Базовый урон, получаемый зомби при ударе о деревянные баррикады (в процентах от их здоровья). Умножается на бонусы типа материала.",
+    
+    Sandbox_BarricadesHurtZombies_DamageMode = "Источник Урона",
+    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "Какие типы объектов будут наносить урон зомби при ударе",
+    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "Только Построенное Игроком",
+    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "Все Объекты",
+    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "Отключено",
+    
+    Sandbox_BarricadesHurtZombies_MetalMultiplier = "Множитель Урона Металла",
+    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "Дополнительный урон от металлических барьеров по сравнению с деревянными. 1.25 означает на 25% больше урона, чем дерево.",
+    
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "Множитель Лёгких Шипов (Требуется SVU)",
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "При установленном SVU: Дополнительный урон от лёгких шипов. 1.5 означает на 50% больше урона, чем дерево. Без SVU не действует.",
+    
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "Множитель Тяжёлых Шипов (Требуется SVU)",
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "При установленном SVU: Дополнительный урон от тяжёлых шипов. 1.75 означает на 75% больше урона, чем дерево. Без SVU не действует.",
+    
+    Sandbox_BarricadesHurtZombies_BloodEffects = "Эффекты Крови",
+    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "Если включено, при получении урона зомби будут создавать брызги крови. Более прочные материалы создают больше крови.",
+}

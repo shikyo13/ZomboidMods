@@ -1,17 +1,29 @@
-Sandbox_EN = {
+﻿Sandbox_EN = {
     -- Page Name
     Sandbox_BarricadesHurtZombies = "Barricades Hurt Zombies",
     
-    -- Barricade Damage Option
-    Sandbox_BarricadesHurtZombies_BarricadeDamage = "Damage Per Hit",
-    Sandbox_BarricadesHurtZombies_BarricadeDamage_tooltip = "How much damage zombies take when hitting barricades (as a percentage of their health)",
+    -- Base Damage Option
+    Sandbox_BarricadesHurtZombies_BaseDamage = "Base Damage",
+    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "Base damage zombies take when hitting wooden barricades (as a percentage of their health). This will be multiplied by material type bonuses.",
     
-    -- Hurting Barricade Type Option
-    Sandbox_BarricadesHurtZombies_HurtingBarricade = "Damaging Barricade Types",
-    Sandbox_BarricadesHurtZombies_HurtingBarricade_tooltip = "Which types of barricades will damage zombies when hit",
+    -- Damage Mode Option
+    Sandbox_BarricadesHurtZombies_DamageMode = "Damage Source",
+    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "Which types of objects will damage zombies when hit",
+    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "Player-Built Only",
+    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "All Objects",
+    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "Disabled",
     
-    -- Enum values for HurtingBarricade
-    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option1 = "Player-Built Only",
-    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option2 = "All Objects",
-    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option3 = "Disabled",
+    -- Material Multipliers
+    Sandbox_BarricadesHurtZombies_MetalMultiplier = "Metal Damage Multiplier",
+    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "How much extra damage metal barriers deal compared to wooden ones. 1.25 means 25% more damage than wood.",
+    
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "Light Spike Multiplier",
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "How much extra damage light spikes and basic spiked armor deal. 1.5 means 50% more damage than wood.",
+    
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "Heavy Spike Multiplier",
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "How much extra damage heavy spikes and reinforced spiked armor deal. 1.75 means 75% more damage than wood.",
+    
+    -- Blood Effects Toggle
+    Sandbox_BarricadesHurtZombies_BloodEffects = "Blood Effects",
+    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "If enabled, zombies will create blood splatters when taking damage. More blood appears with stronger materials.",
 }

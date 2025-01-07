@@ -1,21 +1,58 @@
 VERSION = 1,
 
-option BarricadesHurtZombies.BarricadeDamage
+option BarricadesHurtZombies.BaseDamage
 {
-    type = integer,
+    type = double,
     min = 0,
     max = 100,
     default = 50,
     page = BarricadesHurtZombies,
-    translation = BarricadesHurtZombies_BarricadeDamage,
+    translation = BarricadesHurtZombies_BaseDamage,
 }
 
-option BarricadesHurtZombies.HurtingBarricade
+option BarricadesHurtZombies.DamageMode
 {
     type = enum,
     numValues = 3,
     default = 1,
     page = BarricadesHurtZombies,
-    translation = BarricadesHurtZombies_HurtingBarricade,
-    valueTranslation = BarricadesHurtZombies_HurtingBarricade_Values,
+    translation = BarricadesHurtZombies_DamageMode,
+}
+
+option BarricadesHurtZombies.MetalMultiplier
+{
+    type = double,
+    min = 1.0,
+    max = 2.0,
+    default = 1.25,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_MetalMultiplier,
+}
+
+option BarricadesHurtZombies.LightSpikeMultiplier
+{
+    type = double,
+    min = 1.0,
+    max = 2.0,
+    default = 1.5,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_LightSpikeMultiplier,
+}
+
+option BarricadesHurtZombies.HeavySpikeMultiplier
+{
+    type = double,
+    min = 1.0,
+    max = 2.0,
+    default = 1.75,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_HeavySpikeMultiplier,
+}
+
+option BarricadesHurtZombies.BloodEffects
+{
+    type = boolean,
+    default = true,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_BloodEffects,
 }

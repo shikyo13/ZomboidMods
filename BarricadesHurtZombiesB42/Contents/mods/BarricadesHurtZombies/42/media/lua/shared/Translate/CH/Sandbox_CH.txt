@@ -1,0 +1,30 @@
+﻿Sandbox_CN = {
+    -- 页面名称
+    Sandbox_BarricadesHurtZombies = "路障伤害僵尸",
+
+    -- 基础伤害选项（始终激活）
+    Sandbox_BarricadesHurtZombies_BaseDamage = "基础伤害",
+    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "僵尸撞击木路障时受到的基础伤害（占其生命值的百分比）。这将乘以材料类型加成。",
+
+    -- 伤害模式选项（始终激活）
+    Sandbox_BarricadesHurtZombies_DamageMode = "伤害来源",
+    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "哪些类型的物体会在被击中时对僵尸造成伤害",
+    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "仅玩家建造",
+    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "所有物体",
+    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "禁用",
+
+    -- 材料倍数（基础金属始终激活）
+    Sandbox_BarricadesHurtZombies_MetalMultiplier = "金属伤害倍数",
+    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "金属障碍物与木制障碍物相比造成的额外伤害。1.25表示比木头多25%的伤害。",
+
+    -- SVU 特定选项
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "轻型尖刺倍数（需要 SVU）",
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "安装 SVU3 后：轻型尖刺和基本尖刺护甲造成的额外伤害。1.5 表示比木头多 50% 的伤害。没有 SVU3 则无效。",
+
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "重型尖刺倍数（需要 SVU）",
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "安装 SVU3 后：重型尖刺和加强尖刺护甲造成的额外伤害。1.75 表示比木头多 75% 的伤害。没有 SVU3 则无效。",
+
+    -- 血液效果切换（始终激活）
+    Sandbox_BarricadesHurtZombies_BloodEffects = "血液效果",
+    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "如果启用，僵尸在受到伤害时会产生血液飞溅。材料越坚固，血迹越多。",
+}
