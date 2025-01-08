@@ -1,30 +1,17 @@
 ﻿Sandbox_KR = {
     -- 페이지 이름
-    Sandbox_BarricadesHurtZombies = "바리케이드가 좀비를 다치게 함",
-
-    -- 기본 데미지 옵션 (항상 활성화)
-    Sandbox_BarricadesHurtZombies_BaseDamage = "기본 데미지",
-    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "좀비가 나무 바리케이드를 칠 때 받는 기본 데미지 (좀비 체력의 백분율로 표시됨). 이는 재질 유형 보너스로 곱해집니다.",
-
-    -- 데미지 모드 옵션 (항상 활성화)
-    Sandbox_BarricadesHurtZombies_DamageMode = "데미지 소스",
-    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "어떤 종류의 객체가 좀비를 칠 때 데미지를 줄 것인지",
-    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "플레이어가 만든 것만",
-    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "모든 객체",
-    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "비활성화",
-
-    -- 재질 배수 (기본 금속 항상 활성화)
-    Sandbox_BarricadesHurtZombies_MetalMultiplier = "금속 데미지 배수",
-    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "금속 바리케이드가 나무 바리케이드보다 얼마나 더 많은 데미지를 주는지. 1.25는 나무보다 25% 더 많은 데미지를 의미합니다.",
-
-    -- SVU 전용 옵션
-    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "경량 스파이크 배수 (SVU 필요)",
-    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "SVU3 설치 시: 경량 스파이크와 기본 스파이크 갑옷이 얼마나 더 많은 데미지를 주는지. 1.5는 나무보다 50% 더 많은 데미지를 의미합니다. SVU3이 없으면 효과가 없습니다.",
-
-    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "중량 스파이크 배수 (SVU 필요)",
-    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "SVU3 설치 시: 중량 스파이크와 강화된 스파이크 갑옷이 얼마나 더 많은 데미지를 주는지. 1.75는 나무보다 75% 더 많은 데미지를 의미합니다. SVU3이 없으면 효과가 없습니다.",
-
-    -- 혈액 효과 토글 (항상 활성화)
-    Sandbox_BarricadesHurtZombies_BloodEffects = "혈액 효과",
-    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "활성화되면, 좀비가 데미지를 입을 때 피 튀김 효과가 생성됩니다. 강한 재질일수록 더 많은 피가 생성됩니다.",
+    Sandbox_BarricadesHurtZombies = "바리케이드가 좀비를 해침",
+    
+    -- 바리케이드 데미지 옵션
+    Sandbox_BarricadesHurtZombies_BarricadeDamage = "타격당 데미지",
+    Sandbox_BarricadesHurtZombies_BarricadeDamage_tooltip = "좀비가 바리케이드에 부딪칠 때 받는 데미지 (체력의 백분율)",
+    
+    -- 해를 주는 바리케이드 유형 옵션
+    Sandbox_BarricadesHurtZombies_HurtingBarricade = "데미지를 주는 바리케이드 유형",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_tooltip = "부딪칠 때 좀비에게 데미지를 줄 바리케이드 유형",
+    
+    -- HurtingBarricade의 열거값
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option1 = "플레이어 제작 전용",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option2 = "모든 오브젝트",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option3 = "비활성화",
 }

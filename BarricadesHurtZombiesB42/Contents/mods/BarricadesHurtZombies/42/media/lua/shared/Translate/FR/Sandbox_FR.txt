@@ -1,24 +1,17 @@
 ﻿Sandbox_FR = {
+    -- Nom de la page
     Sandbox_BarricadesHurtZombies = "Les Barricades Blessent les Zombies",
     
-    Sandbox_BarricadesHurtZombies_BaseDamage = "Dégâts de Base",
-    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "Dégâts de base que les zombies subissent en frappant les barricades en bois (en pourcentage de leur santé). Ce montant sera multiplié selon le type de matériau.",
+    -- Option de dégâts des barricades
+    Sandbox_BarricadesHurtZombies_BarricadeDamage = "Dégâts par Impact",
+    Sandbox_BarricadesHurtZombies_BarricadeDamage_tooltip = "Quantité de dégâts subis par les zombies lorsqu'ils frappent les barricades (en pourcentage de leur santé)",
     
-    Sandbox_BarricadesHurtZombies_DamageMode = "Source des Dégâts",
-    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "Quels types d'objets infligeront des dégâts aux zombies lors des impacts",
-    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "Construction Joueur Uniquement",
-    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "Tous les Objets",
-    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "Désactivé",
+    -- Option de type de barricade qui blesse
+    Sandbox_BarricadesHurtZombies_HurtingBarricade = "Types de Barricades Dangereuses",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_tooltip = "Quels types de barricades blesseront les zombies lors des impacts",
     
-    Sandbox_BarricadesHurtZombies_MetalMultiplier = "Multiplicateur de Dégâts Métal",
-    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "Dégâts supplémentaires infligés par les barrières métalliques par rapport au bois. 1.25 signifie 25% de dégâts en plus que le bois.",
-    
-    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "Multiplicateur Pointes Légères (Nécessite SVU)",
-    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "Avec SVU installé : Dégâts supplémentaires des pointes légères. 1.5 signifie 50% de dégâts en plus que le bois. Sans effet sans SVU.",
-    
-    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "Multiplicateur Pointes Lourdes (Nécessite SVU)",
-    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "Avec SVU installé : Dégâts supplémentaires des pointes lourdes. 1.75 signifie 75% de dégâts en plus que le bois. Sans effet sans SVU.",
-    
-    Sandbox_BarricadesHurtZombies_BloodEffects = "Effets de Sang",
-    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "Si activé, les zombies créeront des éclaboussures de sang en subissant des dégâts. Plus de sang apparaît avec des matériaux plus résistants.",
+    -- Valeurs d'énumération pour HurtingBarricade
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option1 = "Constructions du Joueur Uniquement",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option2 = "Tous les Objets",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option3 = "Désactivé",
 }
