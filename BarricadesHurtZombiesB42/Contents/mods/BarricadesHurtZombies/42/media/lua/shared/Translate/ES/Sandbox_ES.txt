@@ -1,24 +1,17 @@
 ﻿Sandbox_ES = {
-    Sandbox_BarricadesHurtZombies = "Las Barricadas Hieren a los Zombis",
+    -- Nombre de la página
+    Sandbox_BarricadesHurtZombies = "Las Barricadas Hieren Zombis",
     
-    Sandbox_BarricadesHurtZombies_BaseDamage = "Daño Base",
-    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "Daño base que reciben los zombis al golpear barricadas de madera (como porcentaje de su salud). Se multiplicará por los bonus de tipo de material.",
+    -- Opción de daño de barricadas
+    Sandbox_BarricadesHurtZombies_BarricadeDamage = "Daño por Golpe",
+    Sandbox_BarricadesHurtZombies_BarricadeDamage_tooltip = "Cuánto daño reciben los zombis al golpear las barricadas (como porcentaje de su salud)",
     
-    Sandbox_BarricadesHurtZombies_DamageMode = "Fuente de Daño",
-    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "Qué tipos de objetos dañarán a los zombis al ser golpeados",
-    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "Solo Construcciones del Jugador",
-    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "Todos los Objetos",
-    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "Desactivado",
+    -- Opción de tipo de barricada que hiere
+    Sandbox_BarricadesHurtZombies_HurtingBarricade = "Tipos de Barricadas Dañinas",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_tooltip = "Qué tipos de barricadas dañarán a los zombis al ser golpeadas",
     
-    Sandbox_BarricadesHurtZombies_MetalMultiplier = "Multiplicador de Daño de Metal",
-    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "Daño adicional que causan las barreras metálicas en comparación con las de madera. 1.25 significa 25% más daño que la madera.",
-    
-    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "Multiplicador de Picos Ligeros (Requiere SVU)",
-    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "Con SVU instalado: Daño adicional de picos ligeros. 1.5 significa 50% más daño que la madera. Sin efecto sin SVU.",
-    
-    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "Multiplicador de Picos Pesados (Requiere SVU)",
-    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "Con SVU instalado: Daño adicional de picos pesados. 1.75 significa 75% más daño que la madera. Sin efecto sin SVU.",
-    
-    Sandbox_BarricadesHurtZombies_BloodEffects = "Efectos de Sangre",
-    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "Si está activado, los zombis crearán salpicaduras de sangre al recibir daño. Aparece más sangre con materiales más fuertes.",
+    -- Valores de enumeración para HurtingBarricade
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option1 = "Solo Construidas por Jugador",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option2 = "Todos los Objetos",
+    Sandbox_BarricadesHurtZombies_HurtingBarricade_Values_option3 = "Desactivado",
 }

@@ -5,7 +5,7 @@ option BarricadesHurtZombies.BaseDamage
     type = double,
     min = 0,
     max = 100,
-    default = 50,
+    default = 5,
     page = BarricadesHurtZombies,
     translation = BarricadesHurtZombies_BaseDamage,
 }
@@ -29,6 +29,16 @@ option BarricadesHurtZombies.MetalMultiplier
     translation = BarricadesHurtZombies_MetalMultiplier,
 }
 
+option BarricadesHurtZombies.MetalHeavyMultiplier
+{
+    type = double,
+    min = 1.0,
+    max = 2.0,
+    default = 1.4,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_MetalHeavyMultiplier,
+}
+
 option BarricadesHurtZombies.LightSpikeMultiplier
 {
     type = double,
@@ -49,10 +59,94 @@ option BarricadesHurtZombies.HeavySpikeMultiplier
     translation = BarricadesHurtZombies_HeavySpikeMultiplier,
 }
 
+option BarricadesHurtZombies.ReinforcedMultiplier
+{
+    type = double,
+    min = 1.0,
+    max = 2.0,
+    default = 2.0,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_ReinforcedMultiplier,
+}
+
 option BarricadesHurtZombies.BloodEffects
 {
     type = boolean,
     default = true,
     page = BarricadesHurtZombies,
     translation = BarricadesHurtZombies_BloodEffects,
+}
+
+option BarricadesHurtZombies.VehicleDamageCooldown
+{
+    type = integer,
+    min = 0,
+    max = 1000,
+    default = 0,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_VehicleDamageCooldown,
+}
+
+option BarricadesHurtZombies.VehicleUpdateInterval
+{
+    type = integer,
+    min = 50,
+    max = 500,
+    default = 150,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_VehicleUpdateInterval,
+}
+
+option BarricadesHurtZombies.CustomVehicleRanges
+{
+    type = boolean,
+    default = false,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_CustomVehicleRanges,
+}
+
+option BarricadesHurtZombies.VehicleEngineRange
+{
+    type = double,
+    min = 1.0,
+    max = 5.0,
+    default = 2.6,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_VehicleEngineRange,
+}
+
+option BarricadesHurtZombies.VehicleDoorRange
+{
+    type = double,
+    min = 1.0,
+    max = 5.0,
+    default = 2.4,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_VehicleDoorRange,
+}
+
+option BarricadesHurtZombies.VehicleTrunkRange
+{
+    type = double,
+    min = 1.0,
+    max = 5.0,
+    default = 2.7,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_VehicleTrunkRange,
+}
+
+option BarricadesHurtZombies.DebugMode
+{
+    type = boolean,
+    default = false,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_DebugMode,
+}
+
+option BarricadesHurtZombies.VehicleDebugMode
+{
+    type = boolean,
+    default = false,
+    page = BarricadesHurtZombies,
+    translation = BarricadesHurtZombies_VehicleDebugMode,
 }
