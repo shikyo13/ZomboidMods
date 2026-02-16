@@ -1,4 +1,4 @@
---[[ 
+--[[
     Barricades Hurt Zombies [Build 42]
     Original mod by Brightex
     Build 42 update and continued development by ZeroTheAbsolute
@@ -15,12 +15,12 @@
     - Extensive debug capabilities (disabled by default)
 
     Damage Multiplier System:
-    - Wood (baseline):    1.0×  - Standard damage
-    - Metal:             1.25× - 25% increased damage
-    - Heavy Metal:       1.4×  - 40% increased damage
-    - Light Spikes*:     1.5×  - 50% increased damage
-    - Heavy Spikes*:     1.75× - 75% increased damage
-    - Reinforced*:       2.0×  - Double damage
+    - Wood (baseline):    1.0x  - Standard damage
+    - Metal:             1.25x - 25% increased damage
+    - Heavy Metal:       1.4x  - 40% increased damage
+    - Light Spikes*:     1.5x  - 50% increased damage
+    - Heavy Spikes*:     1.75x - 75% increased damage
+    - Reinforced*:       2.0x  - Double damage
     * Coming with full SVU3 integration
 
     Vehicle System Design:
@@ -32,7 +32,7 @@
 
     Current SVU3 Status:
     Vehicle damage is fully functional but currently uses base metal
-    multiplier (1.25×) for all modded vehicles. Full SVU3 armor type
+    multiplier (1.25x) for all modded vehicles. Full SVU3 armor type
     detection is under development.
 
     Performance Considerations:
@@ -47,16 +47,24 @@
 -- ##  LOGGING & DEBUG CONFIG
 -- ########################################################################
 
-local DEBUG_MODE       = true    -- Toggle detailed debug logs (set false for release)
-local DEBUG_VEHICLES   = true    -- Extra logging for vehicles
+local DEBUG_MODE       = false   -- Toggle detailed debug logs (set false for release)
+local DEBUG_VEHICLES   = false   -- Extra logging for vehicles
 local LOG_ENABLED      = false   -- Master switch for all logs
 
+-- [Fix #11] Structured log levels for granular debug control
+local LOG_LEVELS = { NONE = 0, ERROR = 1, WARN = 2, INFO = 3, DEBUG = 4, TRACE = 5 }
+local currentLogLevel = LOG_LEVELS.NONE
+
 local BHZ = {
-    THUMP_DMG       = 0.05,  -- Base % damage from thumping
-    THUMP_FUNC      = nil,   -- Decides which objects can hurt zombies
+    THUMP_DMG       = 0.05,   -- Base % damage from thumping
+    VEHICLE_DMG     = 0.05,   -- Base % damage from vehicle attacks
+    THUMP_FUNC      = nil,    -- Decides which objects can hurt zombies
     BLOOD_ENABLED   = true,
     LOG_ENABLED     = LOG_ENABLED,
 }
+
+-- [Fix #13] Debug-only statistics tracking
+local stats = { thumpDamageCount = 0, vehicleDamageCount = 0, zombieKills = 0, cycleCount = 0 }
 
 ----------------------------------------------------------------------
 -- Simple Logging Utilities
@@ -90,9 +98,11 @@ function BHZ.log(msg, category)
     -- BHZ.logToFile(output)
 end
 
--- Our debugPrint respects DEBUG_MODE:
-local function debugPrint(msg, category)
+-- [Fix #11] debugPrint now accepts an optional log level parameter
+local function debugPrint(msg, category, level)
     if not DEBUG_MODE then return end
+    level = level or LOG_LEVELS.DEBUG
+    if currentLogLevel < level then return end
     BHZ.log(msg, category or "Debug")
 end
 
@@ -100,7 +110,7 @@ end
 -- ##  MULTIPLIERS & MATERIAL TABLES
 -- ########################################################################
 
-local GAME_SPEED_MULTIPLIERS = {1, 5, 20, 40}
+local GAME_SPEED_MULTIPLIERS = {1, 2, 3, 4}
 
 local DEFAULT_MULTIPLIERS = {
     WOOD         = 1.0,
@@ -155,7 +165,7 @@ local function isSVUArmorPartId(part)
     local partId = part:getId()
     local isSvu = partId and partId:find("^SVU_Armor_") ~= nil
     if DEBUG_VEHICLES then
-        debugPrint("Checking SVU armor: "..tostring(partId) 
+        debugPrint("Checking SVU armor: "..tostring(partId)
                    .." => "..tostring(isSvu), "Vehicle")
     end
     return isSvu
@@ -194,7 +204,7 @@ local function getVehicleMaterialType(vehicle, part)
             debugPrint("Detected reinforced armor from script="..vehicleType, "Vehicle")
             return "REINFORCED"
         else
-            -- e.g. “SVU_Armor_LuxuryCar_Heavy”
+            -- e.g. "SVU_Armor_LuxuryCar_Heavy"
             debugPrint("Detected heavy armor from script="..vehicleType, "Vehicle")
             return "METAL_HEAVY"
         end
@@ -217,347 +227,15 @@ local function getVehicleMaterialType(vehicle, part)
 end
 
 -- ########################################################################
--- ##  SAFE VEHICLE DATA
+-- ##  ZOMBIE DAMAGE SYSTEM
 -- ########################################################################
 
-local function getSafeVehicleData(vehicle)
-    if not (vehicle and instanceof(vehicle, "BaseVehicle")) then
-        return nil, "Not a BaseVehicle"
-    end
+-- Cooldown defaults (overridden by sandbox settings in onLoad)
+local DAMAGE_COOLDOWN  = 500
+local THUMP_COOLDOWN   = 500
 
-    if not vehicle.getX or not vehicle.getY then
-        return nil, "Vehicle missing getX/getY methods"
-    end
-
-    local angleMethod = vehicle.getAngleZ or vehicle.getAngle
-    if not angleMethod then
-        return nil, "No angle method (getAngleZ/getAngle)"
-    end
-
-    local x = vehicle:getX()
-    local y = vehicle:getY()
-    local angle = angleMethod(vehicle)
-    if angle == nil then
-        return nil, "angle is nil"
-    end
-
-    return { x = x, y = y, angle = angle }, nil
-end
-
--- ########################################################################
--- ##  GET ATTACKED VEHICLE & PART (PER-PART DISTANCE)
--- ########################################################################
-
--- Per-part detection radii (adjust as needed):
-local PART_DETECTION_RADIUS = {
-    Engine          = 2.6,
-    TrunkDoor       = 2.7,
-    TrunkLid        = 2.7,
-    DoorFrontLeft   = 2.4,
-    DoorFrontRight  = 2.4,
-    DoorRearLeft    = 2.5,
-    DoorRearRight   = 2.5,
-    SVU_Armor_Front = 2.6,
-    SVU_Armor_Left  = 2.6,
-    SVU_Armor_Right = 2.6,
-    SVU_Armor_Rear  = 2.7,
-
-    default         = 2.2
-}
-
-local function getRangeForPart(partId)
-    if not partId then
-        return PART_DETECTION_RADIUS.default
-    end
-    return PART_DETECTION_RADIUS[partId] or PART_DETECTION_RADIUS.default
-end
-
-local function getAttackedVehicleAndPart(zombie)
-    if not zombie then 
-        debugPrint("No zombie provided", "Vehicle")
-        return nil, nil 
-    end
-
-    local function findBestPart(vehicleObj, zx, zy)
-        if not (vehicleObj and instanceof(vehicleObj, "BaseVehicle")) then
-            debugPrint("Vehicle missing or not BaseVehicle", "Vehicle")
-            return nil
-        end
-
-        local vData, reason = getSafeVehicleData(vehicleObj)
-        if not vData then
-            debugPrint("Failed to get vehicle data: "..tostring(reason), "Vehicle")
-            return nil
-        end
-
-        local relX = zx - vData.x
-        local relY = zy - vData.y
-        local angle = math.atan2(relY, relX) - vData.angle
-
-        -- Normalize angle to -π..π
-        while angle >  math.pi do angle = angle - (2*math.pi) end
-        while angle < -math.pi do angle = angle + (2*math.pi) end
-
-        debugPrint(string.format("Attack angle: %.2f", angle), "Vehicle")
-
-        local script = vehicleObj:getScript()
-        if not script then
-            debugPrint("No vehicle script found", "Vehicle")
-            return nil
-        end
-        local vehicleType = script:getName()
-        debugPrint("Vehicle type: "..tostring(vehicleType), "Vehicle")
-
-        local partLists = {
-            [-0.785] = {
-                primary  = {"SVU_Armor_Front"},
-                fallback = {"Engine"},
-            },
-            [-2.356] = {
-                primary  = {"SVU_Armor_Left"},
-                fallback = {"DoorFrontLeft","DoorRearLeft"},
-            },
-            [0.785] = {
-                primary  = {"SVU_Armor_Right"},
-                fallback = {"DoorFrontRight","DoorRearRight"},
-            },
-            [2.356] = {
-                primary  = {"SVU_Armor_Rear"},
-                fallback = {"TrunkDoor","TrunkLid"},
-            },
-        }
-
-        local angleKeys = {-0.785, -2.356, 0.785, 2.356}
-        local closestKey, closestDist = nil, 999999.0
-        for _, key in ipairs(angleKeys) do
-            local dist = angle - key
-            if dist < 0 then dist = -dist end -- abs
-            if dist < closestDist then
-                closestKey  = key
-                closestDist = dist
-            end
-        end
-
-        if not closestKey then
-            debugPrint("No angle match found", "Vehicle")
-            return nil
-        end
-
-        debugPrint("Using part list for angle "..tostring(closestKey), "Vehicle")
-        local parts = partLists[closestKey]
-
-        -- Try armor parts first
-        for _, partId in ipairs(parts.primary) do
-            local partObj = vehicleObj:getPartById(partId)
-            if partObj then
-                debugPrint("Found SVU armor part: "..partId, "Vehicle")
-                return partObj
-            end
-        end
-
-        -- Fallback standard parts
-        for _, partId in ipairs(parts.fallback) do
-            local partObj = vehicleObj:getPartById(partId)
-            if partObj then
-                debugPrint("Found fallback part: "..partId, "Vehicle")
-                return partObj
-            end
-        end
-
-        debugPrint("No suitable part found", "Vehicle")
-        return nil
-    end
-
-    local square = zombie:getSquare()
-    if not square then return nil, nil end
-    local cell = square:getCell()
-    if not cell then return nil, nil end
-
-    local vehicles = cell:getVehicles()
-    if not vehicles then return nil, nil end
-
-    local zx, zy = zombie:getX(), zombie:getY()
-    debugPrint(string.format("Checking for vehicles near zombie at %.2f,%.2f", zx, zy), "Vehicle")
-
-    local closestDist = 999999.0
-    local closestVehicle, closestPart = nil, nil
-
-    local size = vehicles:size()
-    for i=0, size-1 do
-        local obj = vehicles:get(i)
-        if obj and instanceof(obj, "BaseVehicle") then
-            if obj.getX and obj.getY then
-                local dx = zx - obj:getX()
-                local dy = zy - obj:getY()
-                local dist = (dx*dx + dy*dy)^0.5
-                debugPrint(string.format("Vehicle %d - distance %.2f", i, dist), "Vehicle")
-                if dist < closestDist then
-                    closestDist    = dist
-                    closestVehicle = obj
-                    closestPart    = findBestPart(obj, zx, zy)
-                end
-            else
-                debugPrint("Skipping vehicle with no getX/getY", "Vehicle")
-            end
-        else
-            if obj then
-                debugPrint("Skipping non-BaseVehicle entry: "..tostring(obj), "Vehicle")
-            end
-        end
-    end
-
-    if not closestVehicle then
-        debugPrint("No vehicle found at all", "Vehicle")
-        return nil, nil
-    end
-
-    if not closestPart then
-        debugPrint("Returning vehicle without part", "Vehicle")
-        return closestVehicle, nil
-    end
-
-    local partId = closestPart:getId()
-    local detectionRange = getRangeForPart(partId)
-    debugPrint("closestDist="..string.format("%.2f",closestDist)
-               .." vs part "..tostring(partId)
-               .." range="..tostring(detectionRange),
-               "Vehicle")
-
-    if closestDist > detectionRange then
-        debugPrint(string.format("No vehicle in range (closest=%.2f) [needed <= %.2f]", 
-                                 closestDist, detectionRange), "Vehicle")
-        return nil, nil
-    else
-        debugPrint("Returning vehicle with part: "..partId, "Vehicle")
-        return closestVehicle, closestPart
-    end
-end
-
--- ########################################################################
--- ##  ZOMBIE DAMAGE TICK SYSTEM
--- ########################################################################
-
-local DAMAGE_COOLDOWN  = 0
-local PROCESS_INTERVAL = 150
-
-local tickCounter = 0
+local cleanupCounter = 0
 local zombieDamageCooldowns = {}
-
-local function processVehicleDamage()
-    if not DEBUG_VEHICLES then return end
-
-    tickCounter = tickCounter + 1
-    if tickCounter < PROCESS_INTERVAL then return end
-    tickCounter = 0
-
-    debugPrint("Starting vehicle damage check cycle", "VehicleDamage")
-
-    local player = getPlayer()
-    if not player then
-        debugPrint("getPlayer() returned nil", "VehicleDamage")
-        return
-    end
-
-    local sq = player:getSquare()
-    if not sq then
-        debugPrint("player:getSquare() returned nil", "VehicleDamage")
-        return
-    end
-
-    local cell = sq:getCell()
-    if not cell then
-        debugPrint("playerSquare:getCell() returned nil", "VehicleDamage")
-        return
-    end
-
-    -- We'll gather zombies in a ~5x5 block around the player
-    local px, py, pz = player:getX(), player:getY(), player:getZ()
-    local zombies    = {}
-    local index      = 1
-
-    for ox = -2,2 do
-        for oy = -2,2 do
-            local gx = px + ox
-            local gy = py + oy
-            local sqr = cell:getGridSquare(gx, gy, pz)
-            if sqr then
-                local mo = sqr:getMovingObjects()
-                if mo then
-                    local moSize = mo:size()
-                    for i=0, moSize-1 do
-                        local obj = mo:get(i)
-                        if obj and instanceof(obj, "IsoZombie") then
-                            debugPrint("Found zombie at "..gx..","..gy, "VehicleDamage")
-                            zombies[index] = obj
-                            index = index + 1
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    local totalZombies = index - 1
-    debugPrint("Found "..totalZombies.." zombies to check", "VehicleDamage")
-
-    for i=1, totalZombies do
-        local zombie = zombies[i]
-        if zombie then
-            local state = zombie:getCurrentState()
-            if state then
-                local zombieId    = zombie:getOnlineID()
-                local currentTime = getTimestampMs()
-                local lastTime    = zombieDamageCooldowns[zombieId]
-
-                if not lastTime or (currentTime - lastTime) >= DAMAGE_COOLDOWN then
-                    local stateStr = tostring(state)
-                    debugPrint("Zombie state: "..stateStr, "VehicleDamage")
-
-                    if stateStr:find("AttackVehicle") then
-                        debugPrint("Processing attacking zombie "..zombieId, "VehicleDamage")
-
-                        local vehicle, part = getAttackedVehicleAndPart(zombie)
-                        if vehicle then
-                            debugPrint("Zombie is attacking vehicle="..tostring(vehicle)
-                                       .." part="..(part and part:getId() or "nil"),
-                                       "VehicleDamage")
-
-                            zombieDamageCooldowns[zombieId] = currentTime
-
-                            -- ### DAMAGE LOGIC ###
-                            local baseDmg   = BHZ.THUMP_DMG
-                            local matType   = getVehicleMaterialType(vehicle, part)
-                            local matMult   = MaterialDamageMultiplier[matType] or 1.0
-                            local speedMult = 1 -- ignoring game-speed for vehicles
-
-                            local finalDmg  = baseDmg * matMult * speedMult
-
-                            debugPrint(string.format(
-                                "VehicleDamage: Zombie=%d final=%.2f (base=%.2f, matType=%s, matMult=%.2f, speedMult=%.2f)",
-                                zombieId, finalDmg, baseDmg, matType, matMult, speedMult
-                            ), "DamageCalc")
-
-                            local newHealth = zombie:getHealth() - finalDmg
-                            if newHealth <= 0 then
-                                zombie:Kill(nil)
-                            else
-                                zombie:setHealth(newHealth)
-                            end
-
-                            if BHZ.BLOOD_ENABLED then
-                                local zSq = zombie:getSquare()
-                                if zSq then
-                                    addBloodSplat(zSq, matMult)
-                                end
-                            end
-                            -- ### END DAMAGE LOGIC ###
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
 
 -- ########################################################################
 -- ##  THUMPING (Barricades/Doors/Windows)
@@ -571,19 +249,21 @@ local function getMaterialType(target)
 
     debugPrint("getMaterialType: Checking => "..tostring(target))
 
-    if instanceof(target, "BaseVehicle") then
-        local part = target:getCurrentPart()
-        return getVehicleMaterialType(target, part)
-    end
-
     if instanceof(target, "IsoThumpable") then
-        local isMetal = target:getSprite():getProperties():Is("Material") == "Metal"
+        local sprite = target:getSprite()
+        if not sprite then return "WOOD" end
+        local props = sprite:getProperties()
+        if not props then return "WOOD" end
+        local isMetal = props:Is("Material", "Metal")
         debugPrint("IsoThumpable => isMetal="..tostring(isMetal))
         return isMetal and "METAL" or "WOOD"
     elseif instanceof(target, "IsoBarricade") then
         local isMetal = target:isMetal()
         debugPrint("IsoBarricade => isMetal="..tostring(isMetal))
         return isMetal and "METAL" or "WOOD"
+    elseif instanceof(target, "IsoDoor") or instanceof(target, "IsoWindow") then
+        debugPrint("Door/Window => WOOD (base damage)")
+        return "WOOD"
     end
 
     debugPrint("getMaterialType: default => WOOD")
@@ -592,9 +272,10 @@ end
 
 local function isPlayerBuiltOrMoved(thump_target)
     if not thump_target then return false end
-    if instanceof(thump_target, "BaseVehicle") then return true end
     if instanceof(thump_target, "IsoThumpable") then return true end
     if instanceof(thump_target, "IsoBarricade") then return true end
+    if instanceof(thump_target, "IsoDoor") then return true end
+    if instanceof(thump_target, "IsoWindow") then return true end
     if instanceof(thump_target, "BarricadeAble") and not instanceof(thump_target, "IsoThumpable") then
         return thump_target:isBarricaded()
     end
@@ -616,16 +297,29 @@ end
 local function onLoad()
     debugPrint("Loading BHZ sandbox settings...")
 
+    -- Reset cooldowns and stats on load
+    zombieDamageCooldowns = {}
+    cleanupCounter = 0
+    stats.thumpDamageCount = 0
+    stats.vehicleDamageCount = 0
+    stats.zombieKills = 0
+    stats.cycleCount = 0
+
     local SandboxVars = SandboxVars
     if SandboxVars and SandboxVars.BarricadesHurtZombies then
         -- Process core damage settings
         local baseDamage = tonumber(SandboxVars.BarricadesHurtZombies.BaseDamage) or 5
-        -- Clamp base damage between 0-100%
         if baseDamage < 0   then baseDamage = 0   end
         if baseDamage > 100 then baseDamage = 100 end
-        -- Convert percentage to decimal (5% becomes 0.05)
         BHZ.THUMP_DMG = baseDamage / 100
         debugPrint("BaseDamage=" .. baseDamage .. "% => THUMP_DMG=" .. BHZ.THUMP_DMG)
+
+        -- Process vehicle base damage (separate from barricade damage)
+        local vehicleBaseDamage = tonumber(SandboxVars.BarricadesHurtZombies.VehicleBaseDamage) or 5
+        if vehicleBaseDamage < 0   then vehicleBaseDamage = 0   end
+        if vehicleBaseDamage > 100 then vehicleBaseDamage = 100 end
+        BHZ.VEHICLE_DMG = vehicleBaseDamage / 100
+        debugPrint("VehicleBaseDamage=" .. vehicleBaseDamage .. "% => VEHICLE_DMG=" .. BHZ.VEHICLE_DMG)
 
         -- Set up damage mode (what objects can hurt zombies)
         local mode = SandboxVars.BarricadesHurtZombies.DamageMode
@@ -638,53 +332,40 @@ local function onLoad()
         end
 
         -- Load material multipliers with fallbacks to defaults
-        MaterialDamageMultiplier.METAL = SandboxVars.BarricadesHurtZombies.MetalMultiplier 
+        MaterialDamageMultiplier.METAL = SandboxVars.BarricadesHurtZombies.MetalMultiplier
             or DEFAULT_MULTIPLIERS.METAL
-        MaterialDamageMultiplier.METAL_HEAVY = SandboxVars.BarricadesHurtZombies.MetalHeavyMultiplier 
+        MaterialDamageMultiplier.METAL_HEAVY = SandboxVars.BarricadesHurtZombies.MetalHeavyMultiplier
             or DEFAULT_MULTIPLIERS.METAL_HEAVY
-        MaterialDamageMultiplier.LIGHT_SPIKE = SandboxVars.BarricadesHurtZombies.LightSpikeMultiplier 
+        MaterialDamageMultiplier.LIGHT_SPIKE = SandboxVars.BarricadesHurtZombies.LightSpikeMultiplier
             or DEFAULT_MULTIPLIERS.LIGHT_SPIKE
-        MaterialDamageMultiplier.HEAVY_SPIKE = SandboxVars.BarricadesHurtZombies.HeavySpikeMultiplier 
+        MaterialDamageMultiplier.HEAVY_SPIKE = SandboxVars.BarricadesHurtZombies.HeavySpikeMultiplier
             or DEFAULT_MULTIPLIERS.HEAVY_SPIKE
-        MaterialDamageMultiplier.REINFORCED = SandboxVars.BarricadesHurtZombies.ReinforcedMultiplier 
+        MaterialDamageMultiplier.REINFORCED = SandboxVars.BarricadesHurtZombies.ReinforcedMultiplier
             or DEFAULT_MULTIPLIERS.REINFORCED
 
         -- Configure visual effects
-        BHZ.BLOOD_ENABLED = SandboxVars.BarricadesHurtZombies.BloodEffects
+        BHZ.BLOOD_ENABLED = SandboxVars.BarricadesHurtZombies.BloodEffects ~= false
 
-        -- Set up vehicle system configuration
-        DAMAGE_COOLDOWN = SandboxVars.BarricadesHurtZombies.VehicleDamageCooldown or 0
-        PROCESS_INTERVAL = SandboxVars.BarricadesHurtZombies.VehicleUpdateInterval or 150
-
-        -- Update vehicle detection ranges if custom ranges are enabled
-        if SandboxVars.BarricadesHurtZombies.CustomVehicleRanges then
-            PART_DETECTION_RADIUS = {
-                -- Engine-related parts
-                Engine = SandboxVars.BarricadesHurtZombies.VehicleEngineRange or 2.6,
-                SVU_Armor_Front = SandboxVars.BarricadesHurtZombies.VehicleEngineRange or 2.6,
-                
-                -- Trunk-related parts
-                TrunkDoor = SandboxVars.BarricadesHurtZombies.VehicleTrunkRange or 2.7,
-                TrunkLid = SandboxVars.BarricadesHurtZombies.VehicleTrunkRange or 2.7,
-                SVU_Armor_Rear = SandboxVars.BarricadesHurtZombies.VehicleTrunkRange or 2.7,
-                
-                -- Door-related parts
-                DoorFrontLeft = SandboxVars.BarricadesHurtZombies.VehicleDoorRange or 2.4,
-                DoorFrontRight = SandboxVars.BarricadesHurtZombies.VehicleDoorRange or 2.4,
-                DoorRearLeft = SandboxVars.BarricadesHurtZombies.VehicleDoorRange or 2.5,
-                DoorRearRight = SandboxVars.BarricadesHurtZombies.VehicleDoorRange or 2.5,
-                SVU_Armor_Left = SandboxVars.BarricadesHurtZombies.VehicleDoorRange or 2.6,
-                SVU_Armor_Right = SandboxVars.BarricadesHurtZombies.VehicleDoorRange or 2.6,
-
-                -- Default fallback for unspecified parts
-                default = 2.2
-            }
-        end
+        -- Set up cooldown configuration
+        THUMP_COOLDOWN = SandboxVars.BarricadesHurtZombies.ThumpDamageCooldown or 500
+        DAMAGE_COOLDOWN = SandboxVars.BarricadesHurtZombies.VehicleDamageCooldown or 500
 
         -- Configure debug settings
         DEBUG_MODE = SandboxVars.BarricadesHurtZombies.DebugMode or false
         DEBUG_VEHICLES = SandboxVars.BarricadesHurtZombies.VehicleDebugMode or false
-        BHZ.LOG_ENABLED = DEBUG_MODE or DEBUG_VEHICLES
+
+        -- LogLevel enum: 1=None, 2=Error, 3=Warn, 4=Info, 5=Debug, 6=Trace
+        local logLevelEnum = SandboxVars.BarricadesHurtZombies.LogLevel or 1
+        currentLogLevel = math.max(0, logLevelEnum - 1) -- enum is 1-indexed, LOG_LEVELS is 0-indexed
+
+        -- Legacy debug toggles override LogLevel if they set a higher level
+        if DEBUG_VEHICLES and currentLogLevel < LOG_LEVELS.TRACE then
+            currentLogLevel = LOG_LEVELS.TRACE
+        elseif DEBUG_MODE and currentLogLevel < LOG_LEVELS.DEBUG then
+            currentLogLevel = LOG_LEVELS.DEBUG
+        end
+
+        BHZ.LOG_ENABLED = currentLogLevel > LOG_LEVELS.NONE
 
         -- Log the configuration if debugging is enabled
         if DEBUG_MODE then
@@ -693,21 +374,22 @@ local function onLoad()
             debugPrint(string.format("  Damage Mode: %d", mode))
             debugPrint(string.format("  Metal Multiplier: %.2fx", MaterialDamageMultiplier.METAL))
             debugPrint(string.format("  Vehicle Cooldown: %dms", DAMAGE_COOLDOWN))
-            debugPrint(string.format("  Update Interval: %dms", PROCESS_INTERVAL))
-            debugPrint(string.format("  Custom Ranges: %s", 
-                SandboxVars.BarricadesHurtZombies.CustomVehicleRanges and "enabled" or "disabled"))
+            debugPrint(string.format("  Thump Cooldown: %dms", THUMP_COOLDOWN))
+            debugPrint(string.format("  Log Level: %d", currentLogLevel))
         end
     else
         -- If no sandbox settings found, use safe defaults
         debugPrint("No sandbox config => using defaults")
         BHZ.THUMP_DMG = 0.05      -- 5% base damage
+        BHZ.VEHICLE_DMG = 0.05    -- 5% vehicle base damage
         BHZ.THUMP_FUNC = isPlayerBuiltOrMoved
         BHZ.BLOOD_ENABLED = true
         DEBUG_MODE = false
         DEBUG_VEHICLES = false
         BHZ.LOG_ENABLED = false
-        DAMAGE_COOLDOWN = 0
-        PROCESS_INTERVAL = 150
+        currentLogLevel = LOG_LEVELS.NONE
+        THUMP_COOLDOWN = 500
+        DAMAGE_COOLDOWN = 500
 
         -- Reset all multipliers to defaults
         for mat, mult in pairs(DEFAULT_MULTIPLIERS) do
@@ -716,6 +398,183 @@ local function onLoad()
     end
 
     debugPrint("BHZ mod settings loaded")
+
+    -- Always print startup banner (dev build visibility)
+    print("[BHZ] BarricadesHurtZombies loaded | THUMP_DMG=" .. BHZ.THUMP_DMG
+        .. " VEHICLE_DMG=" .. BHZ.VEHICLE_DMG
+        .. " LogLevel=" .. currentLogLevel
+        .. " Blood=" .. tostring(BHZ.BLOOD_ENABLED))
+end
+
+-- ########################################################################
+-- ##  DAMAGE HANDLERS — OnZombieUpdate (Thump + Vehicle)
+-- ########################################################################
+
+-- Both handlers use OnZombieUpdate which fires per-zombie per-tick on server+SP.
+-- This eliminates grid scanning, search radius limits, and getOnlineID issues.
+-- Vehicle detection uses zombie:getTarget():getVehicle() (confirmed via Java decompilation:
+-- AttackVehicleState targets a player inside a vehicle, not the vehicle itself).
+
+local function handleThumpDamage(zombie)
+    local thump_target = zombie:getThumpTarget()
+    if not thump_target then return end
+    -- Skip vehicles — handled by handleVehicleDamage via AttackVehicleState
+    if instanceof(thump_target, "BaseVehicle") then return end
+
+    -- Cooldown check
+    local zombieId = zombie:getOnlineID()
+    if not zombieId or zombieId <= 0 then zombieId = tostring(zombie) end
+    local currentTime = getTimestampMs()
+    local lastTime = zombieDamageCooldowns[zombieId]
+    if lastTime and (currentTime - lastTime) < THUMP_COOLDOWN then return end
+
+    -- Calculate damage
+    local thump_dmg = BHZ.THUMP_DMG
+    local blood_intensity = 1
+    local materialType = getMaterialType(thump_target)
+    local materialMultiplier = MaterialDamageMultiplier[materialType] or 1.0
+    thump_dmg = thump_dmg * materialMultiplier
+    blood_intensity = blood_intensity * materialMultiplier
+
+    -- Check mod data for custom multiplier (compatibility with other mods)
+    local damage_multiplier = thump_target:getModData().BarricadeDamageMultiplier
+    if damage_multiplier then
+        thump_dmg = thump_dmg * damage_multiplier
+        blood_intensity = blood_intensity * damage_multiplier
+    else
+        if BHZ.THUMP_FUNC and not BHZ.THUMP_FUNC(thump_target) then
+            return
+        end
+    end
+
+    -- Apply damage
+    local oldHealth = zombie:getHealth()
+    local newHealth = oldHealth - thump_dmg
+    zombieDamageCooldowns[zombieId] = currentTime
+
+    if currentLogLevel >= LOG_LEVELS.INFO then
+        BHZ.log(string.format("DMG: zombie=%s hp=%.2f->%.2f dmg=%.4f mat=%s src=%s",
+            tostring(zombieId), oldHealth, newHealth, thump_dmg, materialType, "thump"), "Damage")
+    end
+    if currentLogLevel >= LOG_LEVELS.DEBUG then
+        BHZ.log(string.format("z=%s hp=%.2f->%.2f dmg=%.4f mat=%s",
+            tostring(zombieId), oldHealth, newHealth, thump_dmg, materialType), "Thump")
+    end
+
+    if newHealth <= 0 then
+        zombieDamageCooldowns[zombieId] = nil
+        zombie:setHealth(0)
+        local cell = zombie:getCell()
+        if cell then
+            zombie:Kill(zombie)
+        end
+        if currentLogLevel >= LOG_LEVELS.DEBUG then
+            BHZ.log("Killed zombie " .. tostring(zombieId) .. " (hp=" .. oldHealth .. "->0)", "Kill")
+            stats.zombieKills = stats.zombieKills + 1
+        end
+    else
+        zombie:setHealth(newHealth)
+        if BHZ.BLOOD_ENABLED then
+            local square = zombie:getSquare()
+            if square then addBloodSplat(square, blood_intensity) end
+        end
+    end
+
+    if currentLogLevel >= LOG_LEVELS.DEBUG then
+        stats.thumpDamageCount = stats.thumpDamageCount + 1
+    end
+end
+
+local function handleVehicleDamage(zombie)
+    -- Get the vehicle from zombie's target (AttackVehicleState targets a player inside a vehicle)
+    local target = zombie:getTarget()
+    if not target then return end
+    if not instanceof(target, "IsoGameCharacter") then return end
+    local vehicle = target:getVehicle()
+    if not vehicle then return end
+
+    -- Cooldown check
+    local zombieId = zombie:getOnlineID()
+    if not zombieId or zombieId <= 0 then zombieId = tostring(zombie) end
+    local currentTime = getTimestampMs()
+    local lastTime = zombieDamageCooldowns[zombieId]
+    if lastTime and (currentTime - lastTime) < DAMAGE_COOLDOWN then return end
+
+    -- Calculate damage using vehicle material type
+    local baseDmg = BHZ.VEHICLE_DMG
+    local matType = getVehicleMaterialType(vehicle, nil)
+    local matMult = MaterialDamageMultiplier[matType] or 1.0
+    local finalDmg = baseDmg * matMult
+
+    local oldHealth = zombie:getHealth()
+    local newHealth = oldHealth - finalDmg
+    zombieDamageCooldowns[zombieId] = currentTime
+
+    if currentLogLevel >= LOG_LEVELS.INFO then
+        BHZ.log(string.format("DMG: zombie=%s hp=%.2f->%.2f dmg=%.4f mat=%s src=%s",
+            tostring(zombieId), oldHealth, newHealth, finalDmg, matType, "vehicle"), "Damage")
+    end
+    if currentLogLevel >= LOG_LEVELS.DEBUG then
+        BHZ.log(string.format("z=%s hp=%.2f->%.2f dmg=%.4f mat=%s",
+            tostring(zombieId), oldHealth, newHealth, finalDmg, matType), "Vehicle")
+    end
+
+    if newHealth <= 0 then
+        zombieDamageCooldowns[zombieId] = nil
+        zombie:setHealth(0)
+        local cell = zombie:getCell()
+        if cell then
+            zombie:Kill(zombie)
+        end
+        if currentLogLevel >= LOG_LEVELS.DEBUG then
+            BHZ.log("Killed zombie " .. tostring(zombieId) .. " (hp=" .. oldHealth .. "->0)", "Kill")
+            stats.zombieKills = stats.zombieKills + 1
+        end
+    else
+        zombie:setHealth(newHealth)
+        if BHZ.BLOOD_ENABLED then
+            local square = zombie:getSquare()
+            if square then addBloodSplat(square, matMult) end
+        end
+    end
+
+    if currentLogLevel >= LOG_LEVELS.DEBUG then
+        stats.vehicleDamageCount = stats.vehicleDamageCount + 1
+    end
+end
+
+local function onZombieUpdate(zombie)
+    -- MP: only process on server (isClient() returns false in SP, so this is safe)
+    if isClient() then return end
+    if not zombie:isAlive() then return end
+    if zombie:getHealth() <= 0 then return end
+
+    local stateName = zombie:getCurrentStateName()
+    if not stateName then return end
+
+    -- Periodic cooldown cleanup (~every 5000 zombie updates)
+    cleanupCounter = cleanupCounter + 1
+    if cleanupCounter >= 5000 then
+        cleanupCounter = 0
+        local now = getTimestampMs()
+        for id, ts in pairs(zombieDamageCooldowns) do
+            if (now - ts) > 10000 then
+                zombieDamageCooldowns[id] = nil
+            end
+        end
+        if currentLogLevel >= LOG_LEVELS.DEBUG then
+            local count = 0
+            for _ in pairs(zombieDamageCooldowns) do count = count + 1 end
+            BHZ.log("Cooldown table size: " .. count, "Perf")
+        end
+    end
+
+    -- Dispatch to appropriate handler
+    if stateName == "ThumpState" then
+        handleThumpDamage(zombie)
+    elseif stateName == "AttackVehicleState" then
+        handleVehicleDamage(zombie)
+    end
 end
 
 -- ########################################################################
@@ -723,5 +582,5 @@ end
 -- ########################################################################
 
 Events.OnLoad.Add(onLoad)
-Events.OnWorldSound.Add(onZombieThump)
-Events.OnTick.Add(processVehicleDamage)
+-- Both thump and vehicle damage: OnZombieUpdate fires per-zombie on server+SP
+Events.OnZombieUpdate.Add(onZombieUpdate)
