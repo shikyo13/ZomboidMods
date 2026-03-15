@@ -56,7 +56,7 @@ local LOG_LEVELS = { NONE = 0, ERROR = 1, WARN = 2, INFO = 3, DEBUG = 4, TRACE =
 local currentLogLevel = LOG_LEVELS.NONE
 
 local BHZ = {
-    VERSION         = "2.1.0",
+    VERSION         = "2.2.0",
     THUMP_DMG       = 0.05,   -- Base % damage from thumping
     VEHICLE_DMG     = 0.05,   -- Base % damage from vehicle attacks
     THUMP_FUNC      = nil,    -- Decides which objects can hurt zombies
@@ -68,7 +68,7 @@ local BHZ = {
 local stats = { thumpDamageCount = 0, vehicleDamageCount = 0, zombieKills = 0, cycleCount = 0 }
 
 -- ########################################################################
--- ##  COMPATIBILITY HELPERS (42.13 ↔ 42.14+ safe)
+-- ##  COMPATIBILITY HELPERS (42.0 ↔ 42.15+ safe)
 -- ########################################################################
 
 -- Safe game version detection (pcall guards against API differences across builds)
