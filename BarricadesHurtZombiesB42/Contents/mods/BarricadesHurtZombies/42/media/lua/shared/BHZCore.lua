@@ -56,6 +56,7 @@ local LOG_LEVELS = { NONE = 0, ERROR = 1, WARN = 2, INFO = 3, DEBUG = 4, TRACE =
 local currentLogLevel = LOG_LEVELS.NONE
 
 local BHZ = {
+    VERSION         = "2.1.0",
     THUMP_DMG       = 0.05,   -- Base % damage from thumping
     VEHICLE_DMG     = 0.05,   -- Base % damage from vehicle attacks
     THUMP_FUNC      = nil,    -- Decides which objects can hurt zombies
@@ -65,6 +66,32 @@ local BHZ = {
 
 -- [Fix #13] Debug-only statistics tracking
 local stats = { thumpDamageCount = 0, vehicleDamageCount = 0, zombieKills = 0, cycleCount = 0 }
+
+-- ########################################################################
+-- ##  COMPATIBILITY HELPERS (42.13 ↔ 42.14+ safe)
+-- ########################################################################
+
+-- Safe game version detection (pcall guards against API differences across builds)
+local function getGameVersion()
+    local ok, result = pcall(function()
+        return tostring(getCore():getVersion())
+    end)
+    return ok and result or "unknown"
+end
+
+-- Safe property check — guards against IsoPropertyType enum changes in 42.14+
+local function safePropertyCheck(props, key, value)
+    if not props then return false end
+    local ok, result = pcall(props.Is, props, key, value)
+    return ok and result or false
+end
+
+-- Safe blood splat — guards against potential addBloodSplat signature changes
+local function safeAddBloodSplat(square, intensity)
+    if not square then return end
+    if not addBloodSplat then return end
+    pcall(addBloodSplat, square, intensity)
+end
 
 ----------------------------------------------------------------------
 -- Simple Logging Utilities
@@ -254,7 +281,7 @@ local function getMaterialType(target)
         if not sprite then return "WOOD" end
         local props = sprite:getProperties()
         if not props then return "WOOD" end
-        local isMetal = props:Is("Material", "Metal")
+        local isMetal = safePropertyCheck(props, "Material", "Metal")
         debugPrint("IsoThumpable => isMetal="..tostring(isMetal))
         return isMetal and "METAL" or "WOOD"
     elseif instanceof(target, "IsoBarricade") then
@@ -400,7 +427,8 @@ local function onLoad()
     debugPrint("BHZ mod settings loaded")
 
     -- Always print startup banner (dev build visibility)
-    print("[BHZ] BarricadesHurtZombies loaded | THUMP_DMG=" .. BHZ.THUMP_DMG
+    print("[BHZ] BarricadesHurtZombies v" .. BHZ.VERSION .. " | PZ=" .. getGameVersion()
+        .. " | THUMP_DMG=" .. BHZ.THUMP_DMG
         .. " VEHICLE_DMG=" .. BHZ.VEHICLE_DMG
         .. " LogLevel=" .. currentLogLevel
         .. " Blood=" .. tostring(BHZ.BLOOD_ENABLED))
@@ -466,7 +494,7 @@ local function handleThumpDamage(zombie)
         zombie:setHealth(0)
         local cell = zombie:getCell()
         if cell then
-            zombie:Kill(zombie)
+            pcall(zombie.Kill, zombie, zombie)
         end
         if currentLogLevel >= LOG_LEVELS.DEBUG then
             BHZ.log("Killed zombie " .. tostring(zombieId) .. " (hp=" .. oldHealth .. "->0)", "Kill")
@@ -476,7 +504,7 @@ local function handleThumpDamage(zombie)
         zombie:setHealth(newHealth)
         if BHZ.BLOOD_ENABLED then
             local square = zombie:getSquare()
-            if square then addBloodSplat(square, blood_intensity) end
+            if square then safeAddBloodSplat(square, blood_intensity) end
         end
     end
 
@@ -524,7 +552,7 @@ local function handleVehicleDamage(zombie)
         zombie:setHealth(0)
         local cell = zombie:getCell()
         if cell then
-            zombie:Kill(zombie)
+            pcall(zombie.Kill, zombie, zombie)
         end
         if currentLogLevel >= LOG_LEVELS.DEBUG then
             BHZ.log("Killed zombie " .. tostring(zombieId) .. " (hp=" .. oldHealth .. "->0)", "Kill")
@@ -534,7 +562,7 @@ local function handleVehicleDamage(zombie)
         zombie:setHealth(newHealth)
         if BHZ.BLOOD_ENABLED then
             local square = zombie:getSquare()
-            if square then addBloodSplat(square, matMult) end
+            if square then safeAddBloodSplat(square, matMult) end
         end
     end
 
@@ -581,6 +609,15 @@ end
 -- ##  EVENT REGISTRATIONS
 -- ########################################################################
 
-Events.OnLoad.Add(onLoad)
+if Events.OnLoad then
+    Events.OnLoad.Add(onLoad)
+else
+    print("[BHZ] WARNING: Events.OnLoad not available — mod may not initialize")
+end
+
 -- Both thump and vehicle damage: OnZombieUpdate fires per-zombie on server+SP
-Events.OnZombieUpdate.Add(onZombieUpdate)
+if Events.OnZombieUpdate then
+    Events.OnZombieUpdate.Add(onZombieUpdate)
+else
+    print("[BHZ] WARNING: Events.OnZombieUpdate not available — mod will not function")
+end

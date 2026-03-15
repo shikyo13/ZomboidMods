@@ -289,8 +289,8 @@ function BHZDebug.printMaterialInfo()
                                 if sprite then
                                     local props = sprite:getProperties()
                                     if props then
-                                        local isMetal = props:Is("Material", "Metal")
-                                        material = isMetal and "METAL" or "WOOD"
+                                        local propOk, isMetal = pcall(props.Is, props, "Material", "Metal")
+                                        material = (propOk and isMetal) and "METAL" or "WOOD"
                                     else
                                         material = "WOOD (no props)"
                                     end
@@ -385,4 +385,6 @@ local function initDebug()
     BHZDebug.printConfig()
 end
 
-Events.OnLoad.Add(initDebug)
+if Events.OnLoad then
+    Events.OnLoad.Add(initDebug)
+end
