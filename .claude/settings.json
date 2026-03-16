@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash D:/Dev/Projects/GameModding/.claude/hooks/block-game-dlls.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
