@@ -56,7 +56,7 @@ local LOG_LEVELS = { NONE = 0, ERROR = 1, WARN = 2, INFO = 3, DEBUG = 4, TRACE =
 local currentLogLevel = LOG_LEVELS.NONE
 
 local BHZ = {
-    VERSION         = "2.2.0",
+    VERSION         = "2.2.1",
     THUMP_DMG       = 0.05,   -- Base % damage from thumping
     VEHICLE_DMG     = 0.05,   -- Base % damage from vehicle attacks
     THUMP_FUNC      = nil,    -- Decides which objects can hurt zombies
@@ -68,7 +68,7 @@ local BHZ = {
 local stats = { thumpDamageCount = 0, vehicleDamageCount = 0, zombieKills = 0, cycleCount = 0 }
 
 -- ########################################################################
--- ##  COMPATIBILITY HELPERS (42.0 ↔ 42.15+ safe)
+-- ##  COMPATIBILITY HELPERS (42.0 -> 42.16+ safe)
 -- ########################################################################
 
 -- Safe game version detection (pcall guards against API differences across builds)
@@ -79,18 +79,61 @@ local function getGameVersion()
     return ok and result or "unknown"
 end
 
--- Safe property check — guards against IsoPropertyType enum changes in 42.14+
-local function safePropertyCheck(props, key, value)
-    if not props then return false end
-    local ok, result = pcall(props.Is, props, key, value)
-    return ok and result or false
+-- Read a named sprite property as a string. Returns nil on any failure.
+-- Used by getMaterialType to read ThumpSound/DoorSound sprite properties.
+-- Canonical binding: props:get(key) (see ISMoveableSpriteProps.lua and
+-- PropertyContainer.java:162).
+local function getSpriteStringProp(target, key)
+    if not target or not key then return nil end
+    local ok1, sprite = pcall(target.getSprite, target)
+    if not ok1 or not sprite then return nil end
+    local ok2, props = pcall(sprite.getProperties, sprite)
+    if not ok2 or not props then return nil end
+    local ok3, has = pcall(props.has, props, key)
+    if not ok3 or not has then return nil end
+    local ok4, val = pcall(props.get, props, key)
+    if ok4 and val and val ~= "" then return val end
+    return nil
 end
 
--- Safe blood splat — guards against potential addBloodSplat signature changes
+-- Get the sprite name for an IsoObject (nil on failure). Used as a heuristic
+-- fallback for material detection when sprite properties are unset.
+local function getSpriteName(target)
+    if not target then return nil end
+    local ok1, sprite = pcall(target.getSprite, target)
+    if not ok1 or not sprite then return nil end
+    local ok2, name = pcall(sprite.getName, sprite)
+    if ok2 and name and name ~= "" then return name end
+    return nil
+end
+
+-- Safe blood splat - guards against potential addBloodSplat signature changes
 local function safeAddBloodSplat(square, intensity)
     if not square then return end
     if not addBloodSplat then return end
     pcall(addBloodSplat, square, intensity)
+end
+
+-- Per-zombie authority check. PZ delegates zombie simulation to the nearest
+-- client via IsoZombie.authOwner (see NetworkZombieManager.moveZombie). The
+-- side that owns the zombie is the side whose OnZombieUpdate sees accurate
+-- state. Processing on the wrong side reads stale state and damage never
+-- fires. In SP both isClient and isServer are false and we always process.
+-- On a hosted/listen server (both true) the same process handles everything
+-- so always process there too.
+local function shouldProcessZombie(zombie)
+    local client = isClient()
+    local server = isServer()
+    if not client and not server then return true end           -- singleplayer
+    if client and server then return true end                   -- listen server
+    local ok, owner = pcall(zombie.getOwner, zombie)
+    if not ok then return false end
+    if server then
+        -- Dedicated server: owns the zombie iff it has NOT delegated authority
+        return owner == nil
+    end
+    -- Dedicated client: owns the zombie iff the server delegated it to us
+    return owner ~= nil
 end
 
 ----------------------------------------------------------------------
@@ -268,32 +311,124 @@ local zombieDamageCooldowns = {}
 -- ##  THUMPING (Barricades/Doors/Windows)
 -- ########################################################################
 
+-- Sound prefix -> material mapping. Source: IsoThumpable.getSoundPrefix() and
+-- IsoDoor.getSoundPrefix() (both read the sprite "DoorSound" property). These
+-- are the canonical vanilla vocabulary for door/gate material classification.
+local SOUND_PREFIX_MATERIAL = {
+    WoodDoor            = "WOOD",
+    MetalDoor           = "METAL",
+    PrisonMetalDoor     = "METAL_HEAVY",
+    MetalGate           = "METAL",        -- chainlink fence
+    MetalPoleGate       = "METAL",
+    MetalPoleGateDouble = "METAL",
+    GarageDoor          = "METAL_HEAVY",
+    SlidingGlassDoor    = "WOOD",         -- glass, treat as base damage
+}
+
+-- Sprite "ThumpSound" property -> material mapping. Used by non-door
+-- IsoThumpables (log walls, player-built walls, metal walls) per
+-- IsoThumpable.getMeleeHitSurface() switch at lines 2190-2200.
+local THUMP_SOUND_MATERIAL = {
+    ZombieThumpWood            = "WOOD",
+    ZombieThumpGeneric         = "WOOD",
+    ZombieThumpWindow          = "WOOD",
+    ZombieThumpWindowExtra     = "WOOD",
+    ZombieThumpMetal           = "METAL",
+    ZombieThumpMetalPoleGate   = "METAL",
+    ZombieThumpMetalPoleFence  = "METAL",
+    ZombieThumpChainlinkFence  = "METAL",
+    ZombieThumpGarageDoor      = "METAL_HEAVY",
+}
+
 local function getMaterialType(target)
-    if not target then
-        debugPrint("getMaterialType: target=nil => WOOD")
+    if not target then return "WOOD" end
+
+    -- IsoBarricade: dedicated isMetal()/isMetalBar() class methods
+    if instanceof(target, "IsoBarricade") then
+        local ok1, isMetal = pcall(target.isMetal, target)
+        if ok1 and isMetal then
+            debugPrint("IsoBarricade => METAL")
+            return "METAL"
+        end
+        local ok2, isMetalBar = pcall(target.isMetalBar, target)
+        if ok2 and isMetalBar then
+            debugPrint("IsoBarricade => METAL (bar)")
+            return "METAL"
+        end
+        debugPrint("IsoBarricade => WOOD")
         return "WOOD"
     end
 
-    debugPrint("getMaterialType: Checking => "..tostring(target))
+    -- IsoWindow: glass, no metal variants in vanilla
+    if instanceof(target, "IsoWindow") then
+        debugPrint("IsoWindow => WOOD (glass)")
+        return "WOOD"
+    end
 
+    -- IsoDoor: always has closedSprite, so getSoundPrefix() reads DoorSound.
+    if instanceof(target, "IsoDoor") then
+        local ok, prefix = pcall(target.getSoundPrefix, target)
+        if ok and prefix then
+            local mat = SOUND_PREFIX_MATERIAL[prefix]
+            if mat then
+                debugPrint("IsoDoor DoorSound="..prefix.." => "..mat)
+                return mat
+            end
+            debugPrint("IsoDoor DoorSound="..prefix.." unknown => WOOD")
+        end
+        return "WOOD"
+    end
+
+    -- IsoThumpable: split by isDoor() because non-door thumpables have no
+    -- closedSprite, which makes getSoundPrefix() return "WoodDoor" unconditionally
+    -- (see IsoThumpable.java:2173). Non-door thumpables (log walls, metal walls,
+    -- chainlink fences) carry their material via the sprite "ThumpSound" property
+    -- instead (matches PZ's own getMeleeHitSurface at IsoThumpable.java:2188).
     if instanceof(target, "IsoThumpable") then
-        local sprite = target:getSprite()
-        if not sprite then return "WOOD" end
-        local props = sprite:getProperties()
-        if not props then return "WOOD" end
-        local isMetal = safePropertyCheck(props, "Material", "Metal")
-        debugPrint("IsoThumpable => isMetal="..tostring(isMetal))
-        return isMetal and "METAL" or "WOOD"
-    elseif instanceof(target, "IsoBarricade") then
-        local isMetal = target:isMetal()
-        debugPrint("IsoBarricade => isMetal="..tostring(isMetal))
-        return isMetal and "METAL" or "WOOD"
-    elseif instanceof(target, "IsoDoor") or instanceof(target, "IsoWindow") then
-        debugPrint("Door/Window => WOOD (base damage)")
+        local okIsDoor, isDoor = pcall(target.isDoor, target)
+        if okIsDoor and isDoor then
+            local ok, prefix = pcall(target.getSoundPrefix, target)
+            if ok and prefix then
+                local mat = SOUND_PREFIX_MATERIAL[prefix]
+                if mat then
+                    debugPrint("Thumpable(door) DoorSound="..prefix.." => "..mat)
+                    return mat
+                end
+                debugPrint("Thumpable(door) DoorSound="..prefix.." unknown => WOOD")
+            end
+            return "WOOD"
+        end
+
+        -- Non-door thumpable: use sprite ThumpSound property
+        local thumpSound = getSpriteStringProp(target, "ThumpSound")
+        if thumpSound then
+            local mat = THUMP_SOUND_MATERIAL[thumpSound]
+            if mat then
+                debugPrint("Thumpable ThumpSound="..thumpSound.." => "..mat)
+                return mat
+            end
+        end
+
+        -- Sprite name heuristic fallback (for tiles with no ThumpSound set).
+        -- Vanilla fencing sprite naming: fencing_01_24..28 short chainlink,
+        -- fencing_01_56..60 tall chainlink, fencing_01_64..68 metal bars, etc.
+        -- String.find is cheap and only runs when property lookup fails.
+        local spriteName = getSpriteName(target)
+        if spriteName then
+            local lower = string.lower(spriteName)
+            if string.find(lower, "chainlink", 1, true)
+               or string.find(lower, "metal", 1, true)
+               or string.find(lower, "bars", 1, true) then
+                debugPrint("Thumpable sprite="..spriteName.." => METAL (heuristic)")
+                return "METAL"
+            end
+            debugPrint("Thumpable sprite="..spriteName.." ts="..tostring(thumpSound).." => WOOD")
+        else
+            debugPrint("Thumpable no sprite, ts="..tostring(thumpSound).." => WOOD")
+        end
         return "WOOD"
     end
 
-    debugPrint("getMaterialType: default => WOOD")
     return "WOOD"
 end
 
@@ -431,62 +566,26 @@ local function onLoad()
         .. " | THUMP_DMG=" .. BHZ.THUMP_DMG
         .. " VEHICLE_DMG=" .. BHZ.VEHICLE_DMG
         .. " LogLevel=" .. currentLogLevel
-        .. " Blood=" .. tostring(BHZ.BLOOD_ENABLED))
+        .. " Blood=" .. tostring(BHZ.BLOOD_ENABLED)
+        .. " Side=" .. (isClient() and "client" or (isServer() and "server" or "sp")))
 end
 
 -- ########################################################################
--- ##  DAMAGE HANDLERS — OnZombieUpdate (Thump + Vehicle)
+-- ##  DAMAGE APPLICATION (authoritative side only)
 -- ########################################################################
 
--- Both handlers use OnZombieUpdate which fires per-zombie per-tick on server+SP.
--- This eliminates grid scanning, search radius limits, and getOnlineID issues.
--- Vehicle detection uses zombie:getTarget():getVehicle() (confirmed via Java decompilation:
--- AttackVehicleState targets a player inside a vehicle, not the vehicle itself).
-
-local function handleThumpDamage(zombie)
-    local thump_target = zombie:getThumpTarget()
-    if not thump_target then return end
-    -- Skip vehicles — handled by handleVehicleDamage via AttackVehicleState
-    if instanceof(thump_target, "BaseVehicle") then return end
-
-    -- Cooldown check
-    local zombieId = zombie:getOnlineID()
-    if not zombieId or zombieId <= 0 then zombieId = tostring(zombie) end
-    local currentTime = getTimestampMs()
-    local lastTime = zombieDamageCooldowns[zombieId]
-    if lastTime and (currentTime - lastTime) < THUMP_COOLDOWN then return end
-
-    -- Calculate damage
-    local thump_dmg = BHZ.THUMP_DMG
-    local blood_intensity = 1
-    local materialType = getMaterialType(thump_target)
-    local materialMultiplier = MaterialDamageMultiplier[materialType] or 1.0
-    thump_dmg = thump_dmg * materialMultiplier
-    blood_intensity = blood_intensity * materialMultiplier
-
-    -- Check mod data for custom multiplier (compatibility with other mods)
-    local damage_multiplier = thump_target:getModData().BarricadeDamageMultiplier
-    if damage_multiplier then
-        thump_dmg = thump_dmg * damage_multiplier
-        blood_intensity = blood_intensity * damage_multiplier
-    else
-        if BHZ.THUMP_FUNC and not BHZ.THUMP_FUNC(thump_target) then
-            return
-        end
-    end
-
-    -- Apply damage
+-- Apply damage directly to the zombie. Only runs on the side that owns the
+-- zombie's simulation: SP (no MP), server for server-owned zombies, or the
+-- server-side OnClientCommand handler for client-owned zombies after RPC.
+-- Handles kill + blood splat. setHealth has no built-in sync so this MUST
+-- run server-side in MP, never client-side.
+local function applyDamageLocally(zombie, zombieId, damage, bloodIntensity, materialType, source)
     local oldHealth = zombie:getHealth()
-    local newHealth = oldHealth - thump_dmg
-    zombieDamageCooldowns[zombieId] = currentTime
+    local newHealth = oldHealth - damage
 
     if currentLogLevel >= LOG_LEVELS.INFO then
         BHZ.log(string.format("DMG: zombie=%s hp=%.2f->%.2f dmg=%.4f mat=%s src=%s",
-            tostring(zombieId), oldHealth, newHealth, thump_dmg, materialType, "thump"), "Damage")
-    end
-    if currentLogLevel >= LOG_LEVELS.DEBUG then
-        BHZ.log(string.format("z=%s hp=%.2f->%.2f dmg=%.4f mat=%s",
-            tostring(zombieId), oldHealth, newHealth, thump_dmg, materialType), "Thump")
+            tostring(zombieId), oldHealth, newHealth, damage, tostring(materialType or "unknown"), source), "Damage")
     end
 
     if newHealth <= 0 then
@@ -504,9 +603,78 @@ local function handleThumpDamage(zombie)
         zombie:setHealth(newHealth)
         if BHZ.BLOOD_ENABLED then
             local square = zombie:getSquare()
-            if square then safeAddBloodSplat(square, blood_intensity) end
+            if square then safeAddBloodSplat(square, bloodIntensity) end
         end
     end
+end
+
+-- Dispatch damage. On a pure client, forwards to server via sendClientCommand
+-- because setHealth has no network sync. On SP, dedicated server, or listen
+-- server, applies directly (the local process is authoritative).
+local function dispatchZombieDamage(zombie, zombieId, damage, bloodIntensity, materialType, source)
+    -- Server-side (dedicated or listen) and SP all apply locally
+    if isServer() or not isClient() then
+        applyDamageLocally(zombie, zombieId, damage, bloodIntensity, materialType, source)
+        return
+    end
+    -- Pure client: forward to server via RPC
+    if type(zombieId) ~= "number" or zombieId <= 0 then return end
+    sendClientCommand("BHZ", "applyDamage", {
+        id = zombieId,
+        dmg = damage,
+        blood = bloodIntensity,
+        src = source,
+    })
+    if currentLogLevel >= LOG_LEVELS.DEBUG then
+        BHZ.log(string.format("RPC: z=%s dmg=%.4f src=%s", tostring(zombieId), damage, source), "MP")
+    end
+end
+
+-- ########################################################################
+-- ##  DAMAGE HANDLERS - OnZombieUpdate (Thump + Vehicle)
+-- ########################################################################
+
+-- Both handlers use OnZombieUpdate which fires per-zombie per-tick on the side
+-- that owns the zombie's simulation (server for server-owned, client for
+-- client-delegated). Vehicle detection uses zombie:getTarget():getVehicle()
+-- (AttackVehicleState targets a player inside a vehicle, not the vehicle).
+
+local function handleThumpDamage(zombie)
+    local thump_target = zombie:getThumpTarget()
+    if not thump_target then return end
+    -- Skip vehicles - handled by handleVehicleDamage via AttackVehicleState
+    if instanceof(thump_target, "BaseVehicle") then return end
+
+    -- Cooldown check (cheap, do first)
+    local zombieId = zombie:getOnlineID()
+    if not zombieId or zombieId <= 0 then zombieId = tostring(zombie) end
+    local currentTime = getTimestampMs()
+    local lastTime = zombieDamageCooldowns[zombieId]
+    if lastTime and (currentTime - lastTime) < THUMP_COOLDOWN then return end
+
+    -- Filter check (runs BEFORE material detection to avoid wasted work and
+    -- debug spam for targets that won't receive damage). ModData override
+    -- bypasses the filter.
+    local damage_multiplier = thump_target:getModData().BarricadeDamageMultiplier
+    if not damage_multiplier then
+        if BHZ.THUMP_FUNC and not BHZ.THUMP_FUNC(thump_target) then
+            return
+        end
+    end
+
+    -- Calculate damage (material detection only runs for targets that passed the filter)
+    local materialType = getMaterialType(thump_target)
+    local materialMultiplier = MaterialDamageMultiplier[materialType] or 1.0
+    local thump_dmg = BHZ.THUMP_DMG * materialMultiplier
+    local blood_intensity = 1 * materialMultiplier
+
+    if damage_multiplier then
+        thump_dmg = thump_dmg * damage_multiplier
+        blood_intensity = blood_intensity * damage_multiplier
+    end
+
+    zombieDamageCooldowns[zombieId] = currentTime
+    dispatchZombieDamage(zombie, zombieId, thump_dmg, blood_intensity, materialType, "thump")
 
     if currentLogLevel >= LOG_LEVELS.DEBUG then
         stats.thumpDamageCount = stats.thumpDamageCount + 1
@@ -534,37 +702,8 @@ local function handleVehicleDamage(zombie)
     local matMult = MaterialDamageMultiplier[matType] or 1.0
     local finalDmg = baseDmg * matMult
 
-    local oldHealth = zombie:getHealth()
-    local newHealth = oldHealth - finalDmg
     zombieDamageCooldowns[zombieId] = currentTime
-
-    if currentLogLevel >= LOG_LEVELS.INFO then
-        BHZ.log(string.format("DMG: zombie=%s hp=%.2f->%.2f dmg=%.4f mat=%s src=%s",
-            tostring(zombieId), oldHealth, newHealth, finalDmg, matType, "vehicle"), "Damage")
-    end
-    if currentLogLevel >= LOG_LEVELS.DEBUG then
-        BHZ.log(string.format("z=%s hp=%.2f->%.2f dmg=%.4f mat=%s",
-            tostring(zombieId), oldHealth, newHealth, finalDmg, matType), "Vehicle")
-    end
-
-    if newHealth <= 0 then
-        zombieDamageCooldowns[zombieId] = nil
-        zombie:setHealth(0)
-        local cell = zombie:getCell()
-        if cell then
-            pcall(zombie.Kill, zombie, zombie)
-        end
-        if currentLogLevel >= LOG_LEVELS.DEBUG then
-            BHZ.log("Killed zombie " .. tostring(zombieId) .. " (hp=" .. oldHealth .. "->0)", "Kill")
-            stats.zombieKills = stats.zombieKills + 1
-        end
-    else
-        zombie:setHealth(newHealth)
-        if BHZ.BLOOD_ENABLED then
-            local square = zombie:getSquare()
-            if square then safeAddBloodSplat(square, matMult) end
-        end
-    end
+    dispatchZombieDamage(zombie, zombieId, finalDmg, matMult, matType, "vehicle")
 
     if currentLogLevel >= LOG_LEVELS.DEBUG then
         stats.vehicleDamageCount = stats.vehicleDamageCount + 1
@@ -572,10 +711,9 @@ local function handleVehicleDamage(zombie)
 end
 
 local function onZombieUpdate(zombie)
-    -- MP: only process on server (isClient() returns false in SP, so this is safe)
-    if isClient() then return end
     if not zombie:isAlive() then return end
     if zombie:getHealth() <= 0 then return end
+    if not shouldProcessZombie(zombie) then return end
 
     local stateName = zombie:getCurrentStateName()
     if not stateName then return end
@@ -606,18 +744,91 @@ local function onZombieUpdate(zombie)
 end
 
 -- ########################################################################
+-- ##  SERVER-SIDE RPC HANDLER
+-- ########################################################################
+
+-- Maximum damage per RPC (safety clamp against abuse: max 50% health per call)
+local MAX_RPC_DAMAGE = 0.5
+-- Minimum server-side cooldown (stricter than client's default 500ms would
+-- be redundant; use 250ms to accept bursts within the client's throttle)
+local SERVER_MIN_COOLDOWN = 250
+
+-- Look up a zombie by online ID on the server. No direct getter exists in
+-- Lua so we scan the current cell's zombie list. O(n) per RPC, but n is
+-- bounded by rendered zombies and RPCs are gated by the 500ms client cooldown.
+local function findServerZombieById(zombieId)
+    local cell = getCell()
+    if not cell then return nil end
+    local list = cell:getZombieList()
+    if not list then return nil end
+    for i = 0, list:size() - 1 do
+        local z = list:get(i)
+        if z and z:getOnlineID() == zombieId then
+            return z
+        end
+    end
+    return nil
+end
+
+local function onServerApplyDamage(player, args)
+    if type(args) ~= "table" then return end
+    local zombieId = args.id
+    local damage = args.dmg
+    local bloodIntensity = args.blood or 1
+    local source = args.src or "rpc"
+
+    if type(zombieId) ~= "number" or zombieId <= 0 then return end
+    if type(damage) ~= "number" or damage <= 0 then return end
+
+    -- Clamp damage to prevent abuse
+    if damage > MAX_RPC_DAMAGE then damage = MAX_RPC_DAMAGE end
+
+    -- Server-side cooldown safety net
+    local currentTime = getTimestampMs()
+    local lastTime = zombieDamageCooldowns[zombieId]
+    if lastTime and (currentTime - lastTime) < SERVER_MIN_COOLDOWN then
+        return
+    end
+
+    local zombie = findServerZombieById(zombieId)
+    if not zombie then return end
+    if not zombie:isAlive() then return end
+    if zombie:getHealth() <= 0 then return end
+
+    zombieDamageCooldowns[zombieId] = currentTime
+    applyDamageLocally(zombie, zombieId, damage, bloodIntensity, nil, source)
+end
+
+local function onClientCommand(module, command, player, args)
+    if module ~= "BHZ" then return end
+    if not isServer() then return end
+    if command == "applyDamage" then
+        onServerApplyDamage(player, args)
+    end
+end
+
+-- ########################################################################
 -- ##  EVENT REGISTRATIONS
 -- ########################################################################
 
 if Events.OnLoad then
     Events.OnLoad.Add(onLoad)
 else
-    print("[BHZ] WARNING: Events.OnLoad not available — mod may not initialize")
+    print("[BHZ] WARNING: Events.OnLoad not available - mod may not initialize")
 end
 
--- Both thump and vehicle damage: OnZombieUpdate fires per-zombie on server+SP
+-- Both thump and vehicle damage: OnZombieUpdate fires per-zombie on the side
+-- that owns the zombie's state machine (server for server-owned, client for
+-- client-delegated via IsoZombie.authOwner).
 if Events.OnZombieUpdate then
     Events.OnZombieUpdate.Add(onZombieUpdate)
 else
-    print("[BHZ] WARNING: Events.OnZombieUpdate not available — mod will not function")
+    print("[BHZ] WARNING: Events.OnZombieUpdate not available - mod will not function")
+end
+
+-- Server receives damage RPCs from clients that own delegated zombies
+if Events.OnClientCommand then
+    Events.OnClientCommand.Add(onClientCommand)
+else
+    print("[BHZ] WARNING: Events.OnClientCommand not available - MP damage disabled")
 end
