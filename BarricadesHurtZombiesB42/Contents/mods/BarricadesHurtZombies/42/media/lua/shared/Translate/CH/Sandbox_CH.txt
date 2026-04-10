@@ -1,64 +1,40 @@
 Sandbox_CH = {
-    -- Page Name
     Sandbox_BarricadesHurtZombies = "路障傷害殭屍",
-
-    -- Base Damage Option
-    Sandbox_BarricadesHurtZombies_BaseDamage = "Base Damage (Default: 5%)",
-    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "Base damage zombies take when hitting wooden barricades or unarmored vehicles (as a percentage of their health). This will be multiplied by material and armor type bonuses.",
-
-    -- Vehicle Base Damage
-    Sandbox_BarricadesHurtZombies_VehicleBaseDamage = "Vehicle Base Damage (Default: 5%)",
-    Sandbox_BarricadesHurtZombies_VehicleBaseDamage_tooltip = "Base damage zombies take when attacking unarmored vehicles (as a percentage of their health). Separate from barricade damage to allow independent tuning. Vehicles are typically more durable than barricades.",
-
-    -- Damage Mode Option
-    Sandbox_BarricadesHurtZombies_DamageMode = "Damage Source",
-    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "Which types of objects will damage zombies when hit",
-    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "Normal (Structures & Vehicles)",
-    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "All Objects",
-    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "Disabled",
-
-    -- Material Multipliers
-    Sandbox_BarricadesHurtZombies_MetalMultiplier = "Metal Damage Multiplier",
-    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "How much extra damage metal barriers and basic vehicles deal compared to wooden structures. 1.25 means 25% more damage than wood.",
-
-    Sandbox_BarricadesHurtZombies_MetalHeavyMultiplier = "Heavy Metal Armor Multiplier",
-    Sandbox_BarricadesHurtZombies_MetalHeavyMultiplier_tooltip = "How much extra damage heavy vehicle armor deals. 1.4 means 40% more damage than wood. Applies to non-spiked heavy protection.",
-
-    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "Light Spike Multiplier",
-    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "How much extra damage light spiked vehicle armor deals. 1.5 means 50% more damage than wood. Applies to light spiked protection and basic bullbars.",
-
-    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "Heavy Spike Multiplier",
-    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "How much extra damage heavy spiked vehicle armor deals. 1.75 means 75% more damage than wood. Applies to heavy spiked protection and spiked plows.",
-
-    Sandbox_BarricadesHurtZombies_ReinforcedMultiplier = "Reinforced Armor Multiplier",
-    Sandbox_BarricadesHurtZombies_ReinforcedMultiplier_tooltip = "How much extra damage reinforced vehicle armor deals. 2.0 means double damage compared to wood. This is the strongest armor type.",
-
-    -- Blood Effects Toggle
-    Sandbox_BarricadesHurtZombies_BloodEffects = "Blood Effects",
-    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "If enabled, zombies will create blood splatters when taking damage. More blood appears with stronger materials and armor types.",
-
-    -- Thump Cooldown
-    Sandbox_BarricadesHurtZombies_ThumpDamageCooldown = "Thump Damage Cooldown",
-    Sandbox_BarricadesHurtZombies_ThumpDamageCooldown_tooltip = "Minimum time (in milliseconds) between damage applications to a zombie from barricade thumping. Prevents the same zombie from taking damage too rapidly. 0 means no cooldown, 500 is the default.",
-
-    -- Vehicle System Configuration
-    Sandbox_BarricadesHurtZombies_VehicleDamageCooldown = "Vehicle Damage Cooldown",
-    Sandbox_BarricadesHurtZombies_VehicleDamageCooldown_tooltip = "Minimum time (in milliseconds) between damage applications to zombies from vehicles. Default 500ms prevents damage spam.",
-
-    -- Debug Options
-    Sandbox_BarricadesHurtZombies_DebugMode = "Debug Mode",
-    Sandbox_BarricadesHurtZombies_DebugMode_tooltip = "Enables debug logging for general mod operations. Use only when troubleshooting issues.",
-
-    Sandbox_BarricadesHurtZombies_VehicleDebugMode = "Vehicle Debug Mode",
-    Sandbox_BarricadesHurtZombies_VehicleDebugMode_tooltip = "Enables detailed debug logging for vehicle interactions. May impact performance when enabled.",
-
-    -- Log Level
-    Sandbox_BarricadesHurtZombies_LogLevel = "Log Level",
-    Sandbox_BarricadesHurtZombies_LogLevel_tooltip = "Controls how much information is logged. Higher levels produce more output and may impact performance.",
-    Sandbox_BarricadesHurtZombies_LogLevel_option1 = "None (Production)",
-    Sandbox_BarricadesHurtZombies_LogLevel_option2 = "Errors Only",
-    Sandbox_BarricadesHurtZombies_LogLevel_option3 = "Warnings",
-    Sandbox_BarricadesHurtZombies_LogLevel_option4 = "Info",
-    Sandbox_BarricadesHurtZombies_LogLevel_option5 = "Debug",
-    Sandbox_BarricadesHurtZombies_LogLevel_option6 = "Trace (Verbose)",
+    Sandbox_BarricadesHurtZombies_BaseDamage = "基礎傷害（預設：5%）",
+    Sandbox_BarricadesHurtZombies_BaseDamage_tooltip = "殭屍撞擊木製路障、門窗或無裝甲車輛時受到的基礎傷害（佔其生命值的百分比）。此數值會乘以材質和裝甲類型加成。",
+    Sandbox_BarricadesHurtZombies_VehicleBaseDamage = "車輛基礎傷害（預設：5%）",
+    Sandbox_BarricadesHurtZombies_VehicleBaseDamage_tooltip = "殭屍攻擊無裝甲車輛時受到的基礎傷害（佔其生命值的百分比）。與路障傷害分開設定，可獨立調整。車輛通常比路障更耐用。",
+    Sandbox_BarricadesHurtZombies_DamageMode = "傷害來源",
+    Sandbox_BarricadesHurtZombies_DamageMode_tooltip = "哪些類型的物體會在被撞擊時對殭屍造成傷害",
+    Sandbox_BarricadesHurtZombies_DamageMode_option1 = "正常（建築與車輛）",
+    Sandbox_BarricadesHurtZombies_DamageMode_option2 = "所有物體",
+    Sandbox_BarricadesHurtZombies_DamageMode_option3 = "停用",
+    Sandbox_BarricadesHurtZombies_MetalMultiplier = "金屬傷害倍率",
+    Sandbox_BarricadesHurtZombies_MetalMultiplier_tooltip = "金屬障礙物和基本車輛相比木製建築造成的額外傷害。1.25 表示比木材多 25% 的傷害。",
+    Sandbox_BarricadesHurtZombies_MetalHeavyMultiplier = "重型金屬裝甲倍率",
+    Sandbox_BarricadesHurtZombies_MetalHeavyMultiplier_tooltip = "重型車輛裝甲造成的額外傷害。1.4 表示比木材多 40% 的傷害。適用於無尖刺的重型防護。",
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier = "輕型尖刺倍率",
+    Sandbox_BarricadesHurtZombies_LightSpikeMultiplier_tooltip = "輕型尖刺車輛裝甲造成的額外傷害。1.5 表示比木材多 50% 的傷害。適用於輕型尖刺防護和基本防撞桿。",
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier = "重型尖刺倍率",
+    Sandbox_BarricadesHurtZombies_HeavySpikeMultiplier_tooltip = "重型尖刺車輛裝甲造成的額外傷害。1.75 表示比木材多 75% 的傷害。適用於重型尖刺防護和尖刺推雪板。",
+    Sandbox_BarricadesHurtZombies_ReinforcedMultiplier = "強化裝甲倍率",
+    Sandbox_BarricadesHurtZombies_ReinforcedMultiplier_tooltip = "強化車輛裝甲造成的額外傷害。2.0 表示傷害是木材的兩倍。這是最強的裝甲類型。",
+    Sandbox_BarricadesHurtZombies_BloodEffects = "血液效果",
+    Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "啟用後，殭屍受到傷害時會產生血液飛濺效果。材質和裝甲越強，血液效果越明顯。",
+    Sandbox_BarricadesHurtZombies_ThumpDamageCooldown = "撞擊傷害冷卻",
+    Sandbox_BarricadesHurtZombies_ThumpDamageCooldown_tooltip = "對殭屍施加撞擊傷害之間的最短時間（毫秒）。防止同一殭屍受到過快的傷害。0 表示無冷卻，預設為 500。",
+    Sandbox_BarricadesHurtZombies_VehicleDamageCooldown = "車輛傷害冷卻",
+    Sandbox_BarricadesHurtZombies_VehicleDamageCooldown_tooltip = "車輛對殭屍施加傷害之間的最短時間（毫秒）。預設 500 毫秒可防止傷害過於頻繁。",
+    Sandbox_BarricadesHurtZombies_DebugMode = "偵錯模式",
+    Sandbox_BarricadesHurtZombies_DebugMode_tooltip = "啟用模組一般操作的偵錯日誌。僅在排除問題時使用。",
+    Sandbox_BarricadesHurtZombies_VehicleDebugMode = "車輛偵錯模式",
+    Sandbox_BarricadesHurtZombies_VehicleDebugMode_tooltip = "啟用車輛互動的詳細偵錯日誌。啟用時可能影響效能。",
+    Sandbox_BarricadesHurtZombies_LogLevel = "日誌等級",
+    Sandbox_BarricadesHurtZombies_LogLevel_tooltip = "控制記錄的資訊量。等級越高，輸出越多，可能影響效能。",
+    Sandbox_BarricadesHurtZombies_LogLevel_option1 = "無（正式環境）",
+    Sandbox_BarricadesHurtZombies_LogLevel_option2 = "僅錯誤",
+    Sandbox_BarricadesHurtZombies_LogLevel_option3 = "警告",
+    Sandbox_BarricadesHurtZombies_LogLevel_option4 = "資訊",
+    Sandbox_BarricadesHurtZombies_LogLevel_option5 = "偵錯",
+    Sandbox_BarricadesHurtZombies_LogLevel_option6 = "追蹤（詳細）",
 }
