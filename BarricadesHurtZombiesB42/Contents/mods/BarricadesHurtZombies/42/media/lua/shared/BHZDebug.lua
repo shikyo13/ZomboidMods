@@ -30,9 +30,10 @@ function BHZDebug.printConfig()
     local sv = SandboxVars.BarricadesHurtZombies
     print("=== BHZ Configuration ===")
     print("  BaseDamage: " .. tostring(sv.BaseDamage) .. "%")
+    print("  VehicleBaseDamage: " .. tostring(sv.VehicleBaseDamage) .. "%")
     print("  DamageMode: " .. tostring(sv.DamageMode))
 
-    local modeNames = { [1] = "Normal (player-built only)", [2] = "All objects", [3] = "Disabled" }
+    local modeNames = { [1] = "Normal (structures and vehicles)", [2] = "All objects", [3] = "Disabled" }
     print("  DamageMode meaning: " .. (modeNames[sv.DamageMode] or "Unknown"))
 
     print("  MetalMultiplier: " .. tostring(sv.MetalMultiplier) .. "x")
@@ -42,19 +43,12 @@ function BHZDebug.printConfig()
     print("  ReinforcedMultiplier: " .. tostring(sv.ReinforcedMultiplier) .. "x")
 
     print("  BloodEffects: " .. tostring(sv.BloodEffects))
-    print("  ThumpDamageCooldown: " .. tostring(sv.ThumpDamageCooldown) .. "ms")
-    print("  VehicleDamageCooldown: " .. tostring(sv.VehicleDamageCooldown) .. "ms")
-    print("  VehicleUpdateInterval: " .. tostring(sv.VehicleUpdateInterval) .. " ticks")
-    print("  CustomVehicleRanges: " .. tostring(sv.CustomVehicleRanges))
-
-    if sv.CustomVehicleRanges then
-        print("  VehicleEngineRange: " .. tostring(sv.VehicleEngineRange))
-        print("  VehicleDoorRange: " .. tostring(sv.VehicleDoorRange))
-        print("  VehicleTrunkRange: " .. tostring(sv.VehicleTrunkRange))
-    end
+    print("  ThumpDamageCooldown: deprecated, ignored")
+    print("  VehicleDamageCooldown: deprecated, ignored")
 
     print("  DebugMode: " .. tostring(sv.DebugMode))
     print("  VehicleDebugMode: " .. tostring(sv.VehicleDebugMode))
+    print("  LogLevel: " .. tostring(sv.LogLevel))
     print("========================")
 end
 
@@ -339,7 +333,7 @@ function BHZDebug.printMaterialInfo()
     print("========================")
 end
 
--- Dump the cooldown table state (requires access to BHZCore internals)
+-- Dump the server RPC cooldown table state (requires access to BHZCore internals)
 -- Since the cooldown table is local to BHZCore, this provides guidance on
 -- how to check it, and reports what it can observe externally.
 function BHZDebug.printCooldowns()
@@ -354,15 +348,16 @@ function BHZDebug.printCooldowns()
     print("    BHZ.cooldowns = zombieDamageCooldowns")
     print("  Then call: for k,v in pairs(BHZ.cooldowns) do print(k,v) end")
     print("")
-    print("  Configured cooldowns:")
+    print("  Gameplay cooldown sandbox options are deprecated and ignored in v2.2.4.")
+    print("  Damage is gated by real vanilla hit signals instead.")
     local sv = SandboxVars
     if sv and sv.BarricadesHurtZombies then
-        print("    ThumpDamageCooldown: " .. tostring(sv.BarricadesHurtZombies.ThumpDamageCooldown) .. "ms")
-        print("    VehicleDamageCooldown: " .. tostring(sv.BarricadesHurtZombies.VehicleDamageCooldown) .. "ms")
+        print("    ThumpDamageCooldown stored value: " .. tostring(sv.BarricadesHurtZombies.ThumpDamageCooldown))
+        print("    VehicleDamageCooldown stored value: " .. tostring(sv.BarricadesHurtZombies.VehicleDamageCooldown))
     else
         print("    (sandbox settings not available)")
     end
-    print("  Cleanup runs every 1000 vehicle tick cycles.")
+    print("  Cleanup runs every 5000 zombie update cycles.")
     print("  Stale entries older than 10 seconds are purged.")
     print("========================")
 end

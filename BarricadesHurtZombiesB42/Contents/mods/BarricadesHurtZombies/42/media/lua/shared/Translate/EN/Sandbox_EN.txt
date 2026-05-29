@@ -1,4 +1,4 @@
-﻿Sandbox_EN = {
+Sandbox_EN = {
     -- Page Name
     Sandbox_BarricadesHurtZombies = "Barricades Hurt Zombies",
     
@@ -38,12 +38,12 @@
     Sandbox_BarricadesHurtZombies_BloodEffects_tooltip = "If enabled, zombies will create blood splatters when taking damage. More blood appears with stronger materials and armor types.",
 
     -- Thump Cooldown
-    Sandbox_BarricadesHurtZombies_ThumpDamageCooldown = "Thump Damage Cooldown",
-    Sandbox_BarricadesHurtZombies_ThumpDamageCooldown_tooltip = "Minimum time (in milliseconds) between damage applications to a zombie from thumping barricades, doors, or windows. Prevents the same zombie from taking damage too rapidly. 0 means no cooldown, 500 is the default.",
+    Sandbox_BarricadesHurtZombies_ThumpDamageCooldown = "Deprecated: Thump Cooldown (Ignored)",
+    Sandbox_BarricadesHurtZombies_ThumpDamageCooldown_tooltip = "Deprecated compatibility option. Ignored in v2.2.4; structure damage is tied to real vanilla thump condition changes.",
 
     -- Vehicle System Configuration
-    Sandbox_BarricadesHurtZombies_VehicleDamageCooldown = "Vehicle Damage Cooldown",
-    Sandbox_BarricadesHurtZombies_VehicleDamageCooldown_tooltip = "Minimum time (in milliseconds) between damage applications to zombies from vehicles. Default 500ms prevents damage spam.",
+    Sandbox_BarricadesHurtZombies_VehicleDamageCooldown = "Deprecated: Vehicle Cooldown (Ignored)",
+    Sandbox_BarricadesHurtZombies_VehicleDamageCooldown_tooltip = "Deprecated compatibility option. Ignored in v2.2.4; vehicle damage is tied to real vanilla vehicle part or window damage.",
 
     -- Debug Options
     Sandbox_BarricadesHurtZombies_DebugMode = "Debug Mode",

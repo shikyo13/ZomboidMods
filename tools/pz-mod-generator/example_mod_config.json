@@ -1,0 +1,63 @@
+{
+    "mod_name": "My Cool Mod",
+    "mod_id": "MyCoolModB42",
+    "author": "YourName",
+    "description": "A Project Zomboid mod that does cool things.",
+    "version_min": "42.0",
+    "url": "",
+    "has_shared_lua": true,
+    "has_client_lua": false,
+    "has_server_lua": false,
+    "has_sandbox_options": true,
+    "has_common_folder": true,
+    "sandbox_options": [
+        {
+            "name": "Enabled",
+            "type": "boolean",
+            "default": true,
+            "tooltip": "Enable or disable the mod"
+        },
+        {
+            "name": "Strength",
+            "type": "double",
+            "default": 1.0,
+            "min": 0.0,
+            "max": 10.0,
+            "tooltip": "How strong the effect is"
+        },
+        {
+            "name": "Mode",
+            "type": "enum",
+            "num_values": 3,
+            "default": 1,
+            "tooltip": "Which mode to use",
+            "options": [
+                "Easy",
+                "Normal",
+                "Hard"
+            ]
+        },
+        {
+            "name": "UpdateInterval",
+            "type": "integer",
+            "default": 100,
+            "min": 10,
+            "max": 1000,
+            "tooltip": "How often to run updates (in ticks)"
+        }
+    ],
+    "languages": [
+        "EN",
+        "CH",
+        "DE",
+        "ES",
+        "FR",
+        "JP",
+        "KR",
+        "RU"
+    ],
+    "events_used": [
+        "OnLoad",
+        "OnTick"
+    ]
+}

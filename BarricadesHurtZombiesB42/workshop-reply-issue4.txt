@@ -1,0 +1,7 @@
+Thanks for the report! The mod is designed to damage zombies when they thump structures (doors, windows, barricades, fences) and vehicles. A few questions to help me investigate:
+
+1. What type of fences are you seeing this on - tall fences, barricaded fences, or regular yard fences?
+2. Have you changed any sandbox settings for the mod (Base Damage, Damage Mode, etc.)?
+3. What PZ version are you on?
+
+In the meantime, you can lower the "Base Damage" in sandbox settings (default is 5%) if zombies are dying too quickly. Setting it to 1-2% will slow things down significantly.

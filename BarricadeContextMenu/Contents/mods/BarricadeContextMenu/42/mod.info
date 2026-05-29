@@ -1,0 +1,6 @@
+name=Barricade Context Menu
+id=BarricadeContextMenu
+description=Restores the right-click context menu options for barricading and unbarricading windows and doors. Build 42 moved barricading into the build menu - this mod brings it back to right-click where it belongs.
+versionMin=42.0
+author=ZeroTheAbsolute
+url=https://github.com/shikyo13/ZomboidMods

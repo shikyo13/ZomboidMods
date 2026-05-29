@@ -1,0 +1,8 @@
+Thanks for the feedback. Current B42.18 verified code only applies BHZ damage while PZ reports the zombie in ThumpState with a real thump target, or AttackVehicleState against a player in a vehicle, and BHZ can observe a real vanilla hit result. Structure hits require that zombie's thump condition to decrease. Vehicle hits require real window health or part condition loss. There is no gameplay cooldown fallback.
+
+Default math: wood 0.0500 HP/hit = 20 hits per 1.0 HP; heavy metal 0.0700 = about 15 hits; vehicle metal 0.0625 = 16 hits. My SP debug run matched the math, but reports suggest some configs/mod combos may differ.
+
+Please enable BHZ DebugMode=true, VehicleDebugMode=false, LogLevel=5, reproduce, close PZ, and attach %USERPROFILE%\Zomboid\Lua\BHZDebug.log here:
+[url=https://github.com/shikyo13/ZomboidMods/issues]GitHub issues[/url]
+
+The log includes PZ build, SP/MP side, BHZ settings, ZombieLore, active mods, hit-signal lines, and each damage tick.

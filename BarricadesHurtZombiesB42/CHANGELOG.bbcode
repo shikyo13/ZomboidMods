@@ -1,0 +1,126 @@
+[h1]Changelog[/h1]
+
+[h2]v2.2.4 - 2026-05-12[/h2]
+
+[b]Compatibility[/b]
+[list]
+[*] Verified against the locally installed Project Zomboid 42.18.0 Unstable files.
+[*] Reconfirmed the core BHZ integration points: `OnZombieUpdate` timing, vanilla `ThumpFrame` internals, zombie owner APIs, `AttackVehicleState`, and zombie health serialization through normal MP zombie packets.
+[*] No damage value tuning changes. Damage values, material detection, and MP RPC ownership validation are unchanged from v2.2.3.
+[*] Hardened sandbox edge cases: `DamageMode=Disabled` now suppresses vehicle damage too, and zero damage settings no longer create blood-only damage ticks.
+[*] Hit-signal hardening: BHZ no longer calls `ActionContext.hasEventOccurred()` from Lua. Runtime testing showed that API raises Lua errors even inside `pcall`.
+[*] Structure damage now requires the zombie's vanilla thump condition to decrease for that zombie and target.
+[*] Vehicle damage now requires real vehicle window health or vehicle part condition loss, with shared part de-duping so one vehicle hit is not applied to every nearby attacking zombie.
+[*] Thump and vehicle cooldown sandbox options are present only as deprecated no-ops to avoid existing-save unknown-option errors.
+[/list]
+
+[b]Testing[/b]
+[list]
+[*] Added Build 42.18 test expectations for SP barricade damage, SP occupied vehicle damage, dedicated MP client-owned zombie damage, and `%USERPROFILE%\Zomboid\Lua\BHZDebug.log` creation after the 42.18 file-writer fix.
+[*] Added fast-forward runtime expectations for `cooldown=none`, `effectiveCooldown`, `timeScale`, `event=ZombieThumpCondition`, and vehicle part/window damage event logging.
+[*] Dedicated MP remains best-effort on unstable builds. Please include `BHZDebug.log` with reports of blood without damage, sudden full-health deaths, or RPC ownership rejects.
+[/list]
+
+[h2]v2.2.3 - 2026-05-06[/h2]
+
+[b]Changed[/b]
+[list]
+[*] Default thump and vehicle cooldowns changed from 500ms to 750ms. Damage values are unchanged.
+[*] Dedicated MP client-side processing now requires the zombie owner player to be local when B42 exposes `getOwnerPlayer()`, reducing remote-client visual or pre-RPC damage on zombies owned by another client.
+[*] v2.2.3 attempted to gate damage on PZ's pending `ThumpFrame` animation event through `ActionContext.hasEventOccurred()`. This route was superseded in v2.2.4 after runtime Lua errors.
+[/list]
+
+[b]Investigation[/b]
+[list]
+[*] Decompilation confirmed `OnZombieUpdate` fires before vanilla `ThumpState.execute()` consumes the pending `thumpframe` event, making it practical for Lua-side hit-frame gating.
+[/list]
+
+[h2]v2.2.2 - 2026-04-29[/h2]
+
+[b]Fixed[/b]
+[list]
+[*] Project Zomboid 42.17 dedicated MP: client-owned zombies could show blood effects without losing lasting health. BHZ now applies damage on the owning client before sending the server command, matching PZ's zombie health sync authority.
+[*] Server damage RPC now includes the post-damage health target and applies it idempotently, preventing packet-order double damage while still keeping server-side blood feedback.
+[*] Server damage RPC now rejects client commands for zombies not delegated to that same player, preventing unrelated clients from applying BHZ damage to arbitrary zombie IDs.
+[*] Vehicle damage now passes the B42 vehicle attack part into material detection when available, so exposed SVU armor parts can use their armor multipliers instead of always falling back to base metal.
+[*] Fixed stale debug output that referenced removed vehicle range sandbox options.
+[/list]
+
+[b]Diagnostics[/b]
+[list]
+[*] Added `[BHZCore/Tick] TICK` log lines with the exact fixed-health damage formula, starting HP, remaining HP, computed damage, actual HP removed, cooldown, material, target or vehicle, hit count, and cumulative per-zombie damage totals.
+[*] Config logging now includes `ZombieLore.Toughness` so fast-kill reports can be compared against zombie health settings.
+[*] When debug logging is enabled, BHZ now writes a dedicated `%USERPROFILE%\Zomboid\Lua\BHZDebug.log` containing only BHZ diagnostic lines for the current session.
+[*] The BHZ debug log now starts with environment, PZ build, SP/MP side, BHZ sandbox settings, ZombieLore settings, active mods, and event hook status.
+[/list]
+
+[b]Testing Requested[/b]
+[list]
+[*] This update has been code-reviewed and statically validated, but still needs real Project Zomboid 42.17 SP and dedicated MP playtesting.
+[*] Please report whether zombies lose health or die when thumping structures and vehicles, especially on dedicated servers.
+[*] Useful reports include `%USERPROFILE%\Zomboid\Lua\BHZDebug.log` plus a short note about what looked wrong in-game.
+[/list]
+
+[h2]v2.2.1 - 2026-04-10[/h2]
+
+[b]Fixed[/b]
+[list]
+[*] Multiplayer: damage was never applied to zombies that PZ had delegated to clients via IsoZombie.authOwner. Client now detects state on its authoritative OnZombieUpdate tick and forwards damage to the server via sendClientCommand. This server-only health approach was superseded by v2.2.2 after B42.17 exposed owner-sync overwrites.
+[*] Chainlink fences and other non-door thumpables (log walls, metal walls, metal bar fences) were always classified as wood. Root cause was a helper calling a non-existent PropertyContainer.Is(key, value) method that silently fell through to the wood default.
+[*] Rewrote getMaterialType with an isDoor()-aware dispatch. Doors use IsoDoor/IsoThumpable.getSoundPrefix against a DoorSound lookup table. Non-door thumpables read the sprite ThumpSound property instead, with a sprite-name heuristic as a last-resort safety net.
+[/list]
+
+[b]Added[/b]
+[list]
+[*] Server-side OnClientCommand handler with damage clamping and a 250 ms per-zombie cooldown to prevent MP abuse.
+[*] Verified compatibility with Project Zomboid 42.16.3 Unstable. Existing backwards compatibility with earlier B42 builds is preserved.
+[/list]
+
+[h2]v2.2.0 - 2025-03-15[/h2]
+
+[b]Added[/b]
+[list]
+[*] JSON translation files for all 8 languages (B42.15+ requires JSON format for sandbox option translations)
+[*] Version field added to startup banner for easier troubleshooting
+[/list]
+
+[b]Fixed[/b]
+[list]
+[*] Retained .txt translation files for B42.14 backwards compatibility
+[/list]
+
+[h2]v2.1.0 - 2025-03-15[/h2]
+
+[b]Added[/b]
+[list]
+[*] PZ build version displayed in startup log
+[*] Version tracking in mod
+[/list]
+
+[b]Fixed[/b]
+[list]
+[*] Wrapped props:Is() in pcall to handle IsoPropertyType enum changes across B42 builds
+[*] Wrapped zombie:Kill() in pcall for API stability
+[*] Wrapped addBloodSplat() in pcall for signature safety
+[*] Added Events availability checks before registration to prevent crashes if API is missing
+[/list]
+
+[h2]v2.0.0 - 2025-02-16[/h2]
+
+[b]Added[/b]
+[list]
+[*] Complete rewrite for Build 42
+[*] Vehicle damage system with configurable armor multipliers
+[*] Per-zombie cooldown system to prevent damage spam
+[*] Separate sandbox options for barricade and vehicle base damage
+[*] Material-type multipliers (wood, metal, heavy metal, light spike, heavy spike, reinforced)
+[*] Blood splatter effects (configurable)
+[*] Debug and trace logging with multiple log levels
+[*] Sandbox options translations for 8 languages (CH, DE, EN, ES, FR, JP, KR, RU)
+[/list]
+
+[b]Changed[/b]
+[list]
+[*] Switched from grid scanning to OnZombieUpdate event for damage detection
+[*] Damage mode sandbox option (Normal / All Objects / Disabled)
+[/list]

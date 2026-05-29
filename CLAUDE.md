@@ -29,6 +29,17 @@
 - Kahlua2: no goto/labels, no bitwise ops, string.format("%d", nil) crashes
 - B42 folder structure: 42/ (build-specific), common/ (shared), root mod.info
 
+## Documentation
+
+| When | Read |
+|-|-|
+| Every PZ session | docs/tier1-pz-quickref.md |
+| BHZ damage system, vehicle detection, config | docs/tier2-bhz-architecture.md |
+| PZ event signatures, parameters, client/server | docs/tier3-pz-events.md - use section index |
+| Kahlua2 limits, Java interop, pattern workarounds | docs/tier3-kahlua2.md - use section index |
+| Any PZ game data, class, method, or system lookup | docs/data/_index.md - use file index |
+| ⛔ BEFORE decompiling PZ Java classes | Check docs/data/_index.md first - only decompile if missing |
+
 ## Before Suggesting New Mods
 - Check latest PZ patch notes (TIS Forums PZ Updates) to avoid building something vanilla just added
-- PZ install may be on an older version — don't trust local files as current
+- PZ install may be on an older version - don't trust local files as current

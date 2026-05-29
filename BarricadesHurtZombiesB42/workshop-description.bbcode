@@ -1,0 +1,143 @@
+[h1]Barricades, Doors, Windows, and Vehicles Hurt Zombies [Build 42][/h1]
+
+Updated for B42.18 verified
+
+A comprehensive Build 42 update that makes zombies take damage when attacking barricades, doors, windows, and now vehicles! This mod introduces sophisticated damage systems that make your fortifications truly matter in the zombie apocalypse.
+
+[h2]Key Features[/h2]
+[list]
+[*]Damage on thumpable objects such as doors, windows, and barricades.
+[*]Fully functional vehicle damage system based on B42 vehicle attack states
+[*]Material-based damage scaling for both barricades and vehicles
+[*]SVU3 armor script and visible armor part detection when available
+[*]Customizable sandbox settings for all damage values
+[*]Visual feedback through blood effects
+[/list]
+
+[h2]How It Works[/h2]
+When zombies attack structures or vehicles, they take damage based on what they're attacking. The system identifies different structure materials and vehicle armor signals:
+
+[b]Material Damage Multipliers:[/b]
+[list]
+[*]Wood Structures: Base damage (1.0x)
+[*]Metal Structures: 25% more damage (1.25x)
+[*]Heavy Metal: 40% more damage (1.4x)
+[*]Light Spikes: 50% more damage (1.5x) - SVU3 armor script/part support
+[*]Heavy Spikes: 75% more damage (1.75x) - SVU3 armor script/part support
+[*]Reinforced: Double damage (2.0x) - SVU3 armor script/part support
+[/list]
+
+[h2]Vehicle System[/h2]
+The mod now features a sophisticated vehicle damage system that:
+[list]
+[*]Detects B42 vehicle attack state against occupied vehicles
+[*]Uses the passenger door, window, or nearest bodywork part when B42 exposes one for the attack
+[*]Skips damage safely when B42 exposes no real vehicle window or part damage signal
+[*]Applies appropriate damage multipliers based on material type
+[/list]
+
+[h2]Sandbox Options[/h2]
+Customize the mod to your liking:
+[list]
+[*]Base Damage: Control how much damage zombies take (0-100%)
+[*]Material Multipliers: Adjust damage for different materials
+[*]Damage Source Selection: Choose which objects can hurt zombies
+[*]Blood Effects: Toggle visual feedback
+[/list]
+
+[h2]Current Status[/h2]
+The mod is fully functional for all base game content and vehicles. SVU3 (Standardized Vehicle Upgrades 3) compatibility is best-effort through vehicle script and part IDs:
+[list]
+[*]All vehicles are recognized and processed
+[*]Vehicle damage works correctly
+[*]Modded vehicles without recognizable armor signals use the base metal multiplier (1.25x)
+[*]Recognized SVU armor scripts and visible armor parts use their configured armor multipliers
+[/list]
+
+[h2]B42.18 Status[/h2]
+This update has been checked against the locally installed Project Zomboid 42.18.0 Unstable files. Core BHZ assumptions still match the current jar: OnZombieUpdate timing, vanilla ThumpFrame internals, zombie owner APIs, AttackVehicleState, and zombie health sync are still present.
+
+No damage value tuning changed in v2.2.4. BHZ no longer calls ActionContext.hasEventOccurred from Lua because runtime testing showed that API can raise Lua errors even inside pcall. Structure damage now requires the zombie's vanilla thump condition to decrease for that zombie and target. Vehicle damage now requires real vehicle window health or vehicle part condition loss, with shared part de-duping so one vehicle hit is not applied to every nearby attacking zombie. If a required hit signal is unavailable, BHZ skips damage and logs the failure instead of approximating hits with timer-based damage. Material detection and MP RPC ownership validation are unchanged from v2.2.3. Dedicated MP remains best-effort while B42 is on the unstable branch.
+
+Please enable BHZ debug logging if you can:
+[list]
+[*]Set DebugMode=true, VehicleDebugMode=false, LogLevel=5
+[*]Reproduce the issue, close PZ, and share %USERPROFILE%\Zomboid\Lua\BHZDebug.log
+[*]The log includes PZ build, SP/MP side, BHZ settings, ZombieLore, active mods, and damage calc/apply/kill lines
+[*]Please also mention what looked wrong in-game, such as blood with no damage, full-health zombies suddenly dying, or the object/vehicle being thumped
+[/list]
+
+[h2]Changelog[/h2]
+
+[b]v2.2.4[/b] - B42.18 Compatibility
+[list]
+[*]Verified against Project Zomboid 42.18.0 Unstable installed files.
+[*]Reconfirmed vanilla ThumpFrame internals, zombie owner APIs, AttackVehicleState, and zombie health sync assumptions.
+[*]No damage value tuning changes.
+[*]Hardened sandbox edge cases so Disabled mode suppresses vehicle damage and zero damage settings do not create blood-only ticks.
+[*]Replaced Lua ActionContext hit checks with Lua-visible vanilla hit signals: zombie thump condition changes for structures, vehicle window health or part condition loss for vehicles.
+[*]Thump and vehicle cooldown sandbox options are deprecated no-ops kept only for existing-save compatibility.
+[*]Added 42.18 testing expectations for SP barricades, occupied vehicles, dedicated MP client-owned zombies, and BHZDebug.log creation.
+[/list]
+
+[b]v2.2.3[/b] - MP Cooldown Tuning
+[list]
+[*]Changed default thump and vehicle cooldowns from 500ms to 750ms. Damage values are unchanged.
+[*]Tightened dedicated MP client ownership checks so only the local owning client processes client-owned zombies when B42 exposes the owner player.
+[*]v2.2.3 attempted to use PZ's pending ThumpFrame animation event through ActionContext. v2.2.4 replaced that route after runtime Lua errors.
+[/list]
+
+[b]v2.2.2[/b] - B42.17 Dedicated MP Fix
+[list]
+[*]Fixed dedicated MP cases where zombies could show blood effects but keep full health on Build 42.17.
+[*]Client-owned zombies now take damage on the owning client first, then report the target health to the server so normal PZ zombie sync cannot undo the damage.
+[*]Server damage commands now validate zombie ownership before applying health changes.
+[*]Vehicle damage now passes the B42 attack part into material detection when available.
+[*]Debug logging now writes a BHZ-only %USERPROFILE%\Zomboid\Lua\BHZDebug.log file when enabled.
+[*]Please test this update in SP and dedicated MP and report results in the comments.
+[/list]
+
+[b]v2.2.0[/b] - B42.15+ Compatibility
+[list]
+[*]Added JSON translation files for all 8 languages (B42.15+ format)
+[*]Retained .txt translations for B42.14 backwards compatibility
+[*]Added version and workshopID to mod.info
+[/list]
+
+[b]v2.1.0[/b] - B42.14.1 Compatibility
+[list]
+[*]Added defensive pcall wrappers for cross-version compatibility (42.0 through 42.14.1+)
+[*]Safe property checks for material detection (handles IsoPropertyType enum changes)
+[*]Safe blood splat rendering with graceful fallback
+[*]Safe event registration with startup warnings if hooks are unavailable
+[*]Version and PZ build info now logged on startup for easier troubleshooting
+[/list]
+
+[b]v2.0.0[/b] - Build 42 Rewrite
+[list]
+[*]Complete rewrite for Build 42
+[*]Vehicle damage system tied to B42 vehicle attack states
+[*]Material-based damage multipliers
+[*]Full sandbox configurability with 14 options
+[*]Multiplayer support
+[*]8-language translation support
+[/list]
+
+[h2]Credits[/h2]
+[list]
+[*]Original mod by Brightex
+[*]Build 42 update and continued development by ZeroTheAbsolute
+[/list]
+
+[h2]Related Mods[/h2]
+Works great alongside my other mod. [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3667874678]Barricade Context Menu[/url] - Restores right-click barricading for windows and doors.
+
+[h2]Source Code[/h2]
+Available on [url=https://github.com/shikyo13/ZomboidMods]GitHub[/url]
+
+[hr][/hr]
+
+[h2]Support & Feedback[/h2]
+If you encounter any issues or have suggestions, please share them in the Workshop comments section.
+
+[hr][/hr]

@@ -1,0 +1,1 @@
+Good catch, thanks for looking into it. It was just an extra high-res version of the preview that was accidentally included in the workshop upload. The actual file is 256x256 as that's all PZ's uploader will accept. Duplicates will be cleaned in next update, but even if massively inflated from the original, 6mb is not large.
